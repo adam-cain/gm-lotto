@@ -28,7 +28,7 @@ const WalletStatus = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+    <div className="bg-white  rounded-xl shadow-sm p-4">
       <div className="flex items-center allign-middle mb-2 gap-2">
         <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
         <h3 className="text-lg font-semibold ">Your Wallet</h3>
@@ -36,13 +36,13 @@ const WalletStatus = () => {
       {isConnected && address ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Address</span>
+            <span className="text-sm text-gray-500 ">Address</span>
             <span className="text-sm font-mono">
               {ensName || formatAddress(address)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Network</span>
+            <span className="text-sm text-gray-500 ">Network</span>
             <div className="flex items-center gap-1">
               <span className="text-sm inline-flex items-center gap-1">
                 <Image src={getNetworkImage()} alt={getNetworkName()} width={20} height={20} className='rounded-full'/> 
@@ -56,7 +56,7 @@ const WalletStatus = () => {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Balance</span>
+            <span className="text-sm text-gray-500 ">Balance</span>
             <span className="text-sm">
               {balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : 'Loading...'}
             </span>

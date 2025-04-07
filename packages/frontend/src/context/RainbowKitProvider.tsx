@@ -13,10 +13,7 @@ export function RainbowKitProvider({ children }: { children: ReactNode }) {
     return (
         <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-                <RKProvider initialChain={10} theme={{
-                    lightMode: lightTheme(),
-                    darkMode: darkTheme(),
-                }}>
+                <RKProvider initialChain={10}>
                     {children}
                 </RKProvider>
             </QueryClientProvider>

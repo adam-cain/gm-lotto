@@ -10,13 +10,13 @@ const NetworkGrid: React.FC = () => {
   return (
     <div>
       <div className="flex justify-between items-center gap-2 mb-4">
-        <div className="flex space-x-2 bg-gray-50 dark:bg-gray-800 rounded-xl p-1 w-fit">
+        <div className="flex space-x-2 bg-gray-50  rounded-xl p-1 w-fit">
           <button
             onClick={() => setActiveTab('all')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'all'
-                ? 'bg-white dark:bg-gray-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white  shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 '
             }`}
           >
             All
@@ -25,8 +25,8 @@ const NetworkGrid: React.FC = () => {
             onClick={() => setActiveTab('hot')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'hot'
-                ? 'bg-white dark:bg-gray-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white  shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 '
             }`}
           >
             Hot
@@ -35,8 +35,8 @@ const NetworkGrid: React.FC = () => {
             onClick={() => setActiveTab('new')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'new'
-                ? 'bg-white dark:bg-gray-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white  shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 '
             }`}
           >
             New
@@ -50,7 +50,7 @@ const NetworkGrid: React.FC = () => {
               placeholder="Search networks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2.5 pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+              className="w-full px-4 py-2.5 pl-10 bg-gray-50  border-gray-200  rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
             />
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"

@@ -14,7 +14,7 @@ export default function Home() {
             </h1>
             {/* <Image src="/pot.png" alt="GM" width={400} height={400} /> */}
           </div>
-          <p className="text-md text-gray-600 dark:text-gray-400">
+          <p className="text-md text-gray-600 ">
             Every good morning you send earns a chance at on-chain rewards.
           </p>
         </div>

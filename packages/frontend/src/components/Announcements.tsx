@@ -47,17 +47,17 @@ const winners: Winner[] = [
 
 const Announcements: React.FC = () => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+    <div className="bg-white  rounded-xl shadow-sm p-4">
       <h3 className="text-lg font-semibold mb-4">Recent Winners</h3>
 
       <div className="space-y-4">
         {winners.map((winner) => (
-          <div key={winner.id} className="border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 last:pb-0">
+          <div key={winner.id} className="border-b border-gray-200  pb-3 last:border-0 last:pb-0">
             <div className="flex items-center justify-between mb-1">
               <h4 className="text-sm font-semibold">{winner.address.substring(0, 6)}...{winner.address.substring(38)}</h4>
               <span className="text-sm text-green-500">+{winner.amount}</span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">{winner.date}</p>
+            <p className="text-xs text-gray-600 ">{winner.date}</p>
           </div>
         ))}
       </div>
