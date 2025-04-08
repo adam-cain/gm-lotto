@@ -86,11 +86,11 @@ body {
 
 @layer components {
   .gradient-text {
-    @apply bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent;
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-r from-purple-500/10 to-indigo-500/10;
+    @apply bg-gradient-to-r from-red-400/5 to-red-500/5;
   }
 
   .card {
