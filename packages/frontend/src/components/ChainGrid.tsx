@@ -1,11 +1,11 @@
-import NetworkCard from './NetworkCard';
-import { useNetworkContext } from '../context/NetworkContext';
-import { useNetwork } from '../hooks/useNetwork';
-import { Network } from '../types/network';
+import ChainCard from './ChainCard';
+import { useChainContext } from '../context/ChainContext';
+import { Chain } from '@/lib/chains';
+import { useAccount } from 'wagmi';
 
-const NetworkGrid: React.FC = () => {
-  const { searchTerm, setSearchTerm, filteredNetworks, activeTab, setActiveTab } = useNetworkContext();
-  const { isConnected, isLoading, handleNetworkConnect } = useNetwork();
+const ChainGrid: React.FC = () => {
+  const { searchTerm, setSearchTerm, filteredChains, activeTab, setActiveTab } = useChainContext();
+  const { isConnected } = useAccount();
 
   return (
     <div>
@@ -73,13 +73,11 @@ const NetworkGrid: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredNetworks.map((network: Network) => (
-          <NetworkCard
-            key={network.chainId}
-            network={network}
+        {filteredChains.map((chain: Chain) => (
+          <ChainCard
+            key={chain.id}
+            chain={chain}
             isConnected={isConnected}
-            onConnect={handleNetworkConnect}
-            isLoading={isLoading}
           />
         ))}
       </div>
@@ -87,4 +85,4 @@ const NetworkGrid: React.FC = () => {
   );
 };
 
-export default NetworkGrid;
+export default ChainGrid;

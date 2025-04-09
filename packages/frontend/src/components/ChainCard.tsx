@@ -1,20 +1,38 @@
 import Image from 'next/image';
-import { NetworkCardProps } from '@/types/network';
 import { useAccount } from 'wagmi';
+import { useLotteryContract } from '@/hooks/useLotteryContract';
+import { Chain } from '@/lib/chains';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useState } from 'react';
 
-const NetworkCard: React.FC<NetworkCardProps> = ({
-  network,
+interface ChainCardProps {
+  chain: Chain;
+  isConnected: boolean;
+} 
+
+const ChainCard: React.FC<ChainCardProps> = ({
+  chain,
   isConnected,
-  onConnect,
-  isLoading = false,
 }) => {
+  const { enterLottery } = useLotteryContract(chain.id, chain.contractAddress || '0x0');
   const { chainId } = useAccount();
-  const { name, image, status, color } = network;
+  const { openConnectModal } = useConnectModal();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const buttonTextColor = color
+  const handleClick = async () => {
+    setIsLoading(true);
+    if (isConnected) {
+      await enterLottery();
+    } else {
+      openConnectModal?.();
+    }
+    setIsLoading(false);
+  }
+
+  const buttonTextColor = chain.iconBackground 
     ? (() => {
         // Remove the hash if it exists
-        const hex = color.replace('#', '');
+        const hex = chain.iconBackground.replace('#', '');
         
         // Convert hex to RGB
         const r = parseInt(hex.substr(0, 2), 16);
@@ -48,12 +66,12 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
       <div className="p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100  flex-shrink-0">
-            {image ? (
+            {chain.iconUrl ? (
             <Image
               width={40}
               height={40}
-              src={image}
-              alt={`${name} logo`}
+              src={chain.iconUrl ? (typeof chain.iconUrl === 'string' ? chain.iconUrl : '/images/chains/optimism.svg') : '/images/chains/optimism.svg'}
+              alt={`${chain.name} logo`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 // If image fails to load, use a fallback
@@ -69,32 +87,32 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-gray-900  truncate">
-                {name}
+                {chain.name}
               </h3>
-              {statusBadge[status]}
+              {statusBadge[chain.status as keyof typeof statusBadge]}
             </div>
-            {/* <p className="text-xs text-gray-500 ">
+            <p className="text-xs text-gray-500 ">
               Connect wallet to GM
-            </p> */}
+            </p>
           </div>
         </div>
       </div>
       <div className="px-4 pb-4">
         <button
-          onClick={() => onConnect(network.chainId)}
+          onClick={() => handleClick()}
           disabled={isLoading}
           className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${
             isLoading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{ 
-            backgroundColor: color ?? '#000',
+            backgroundColor: chain.iconBackground ?? '#000',
             color: buttonTextColor 
           }}
         >
           {isLoading ? (
             'Connecting...'
           ) : isConnected ? (
-            chainId === network.chainId ? `GM on ${name}` : `Switch to ${name}`
+            chainId === chain.id ? `GM on ${chain.name}` : `Switch to ${chain.name}`
           ) : (
             'Connect Wallet'
           )}
@@ -104,4 +122,4 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
   );
 };
 
-export default NetworkCard;
+export default ChainCard;

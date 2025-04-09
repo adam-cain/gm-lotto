@@ -38,7 +38,7 @@ const Footer: React.FC = () => {
                 <span>Follow on Twitter</span>
               </Link>
               <Link
-                href="https://discord.gg/PbNTehhPWb"
+                href="https://discord.gg/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-gray-600  hover:text-red-500  transition-colors group"

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { NetworkProvider } from '@/context/NetworkContext';
+import { ChainProvider } from '@/context/ChainContext';
 import { RainbowKitProvider } from '@/context/RainbowKitProvider';
 
 export default function ClientLayout({
@@ -22,7 +22,7 @@ export default function ClientLayout({
         <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
             <div className="min-h-screen bg-gray-100  text-gray-900  pt-40">
                 <RainbowKitProvider>
-                    <NetworkProvider>
+                    <ChainProvider>
                         <Navbar
                             theme={theme}
                             toggleTheme={toggleTheme}
@@ -30,7 +30,7 @@ export default function ClientLayout({
                         <main className="container mx-auto px-4 pb-16">
                             {children}
                         </main>
-                    </NetworkProvider>
+                    </ChainProvider>
                     <Footer />
                 </RainbowKitProvider>
             </div>

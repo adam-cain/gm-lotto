@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cd packages/frontend && npm run dev"
+    "dev": "cd packages/frontend && npm run dev",
+    "build:frontend": "cd packages/frontend && npm run build",
+    "build:contract": "cd packages/contracts && forge build",
+    "deploy:contract": "cd ./packages/contracts && source .env && forge script script/DeployGMLottery.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --verify --chain optimism-sepolia --etherscan-api-key $ETHERSCAN_API_KEY"
   },
   "keywords": [],
   "author": "",

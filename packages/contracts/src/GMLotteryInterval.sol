@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 contract GMLotto {
     // Immutable variables
     address public immutable feeRecipient;
-    uint256 public immutable ENTRY_FEE;
-    uint256 public constant ROUND_DURATION = 24 hours;
+    // uint256 public immutable ENTRY_FEE;
+    uint256 public constant ROUND_DURATION = 1 weeks;
     uint256 public constant WINNER_PERCENTAGE = 90; // 90% of pool goes to winner
     uint256 public constant FEE_PERCENTAGE = 10; // 10% goes to fee recipient
 
@@ -31,15 +31,20 @@ contract GMLotto {
     event RoundStarted(uint256 roundNumber, uint256 startTime);
     event RoundEnded(uint256 roundNumber, address winner, uint256 prize);
     
-    constructor() {
-        feeRecipient = 0x7500A83DF2aF99B2755c47B6B321a8217d876a85;
-        ENTRY_FEE = 0.000029 ether;
+    constructor(address _feeRecipient) {
+        feeRecipient = _feeRecipient;
+        // ENTRY_FEE = _entryFee;
         _startNewRound();
     }
     
     function enterLottery() external payable {
-        if (msg.value != ENTRY_FEE) {
-            revert("Incorrect entry fee");
+        // if (msg.value != ENTRY_FEE) {
+        //     revert("Incorrect entry fee");
+        // }
+        
+        // Check if user has participated in the last 24 hours
+        if (block.timestamp < lastParticipationTimestamp[msg.sender] + 1 days) {
+            revert("Must wait 24 hours between entries");
         }
         
         Round storage round = rounds[currentRound];
@@ -48,9 +53,13 @@ contract GMLotto {
         }
         
         if (block.timestamp >= round.endTime) {
+            // Could be handled by server or cron job
             _endRound();
             _startNewRound();
         }
+        
+        // Update last participation timestamp
+        lastParticipationTimestamp[msg.sender] = block.timestamp;
         
         // Add participant to current round
         round.participants.push(msg.sender);
