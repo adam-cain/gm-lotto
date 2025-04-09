@@ -4,6 +4,7 @@ import { useLotteryContract } from '@/hooks/useLotteryContract';
 import { Chain } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
+import { useSwitchChain } from 'wagmi';
 
 interface ChainCardProps {
   chain: Chain;
@@ -17,11 +18,23 @@ const ChainCard: React.FC<ChainCardProps> = ({
   const { enterLottery } = useLotteryContract(chain.id, chain.contractAddress || '0x0');
   const { chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const { switchChain } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
     setIsLoading(true);
     if (isConnected) {
+      if(chainId !== chain.id) {
+      switchChain({
+        chainId: chain.id,
+      });
+      let interval = setInterval(() => {
+        if(chainId !== chain.id) {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+      
       await enterLottery();
     } else {
       openConnectModal?.();
