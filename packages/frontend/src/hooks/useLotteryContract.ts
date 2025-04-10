@@ -4,6 +4,7 @@ import {
   useSwitchChain,
   useContractWrite,
   useTransaction,
+  useAccount,
 } from "wagmi";
 import {
   LOTTERY_CONTRACT_ABI,
@@ -43,6 +44,7 @@ export function useLotteryContract(
 ) {
   const { switchChain } = useSwitchChain();
   const { writeContract } = useWriteContract();
+  const { address } = useAccount();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   // Get current round info
@@ -50,7 +52,7 @@ export function useLotteryContract(
     address: contractAddress,
     abi: LOTTERY_CONTRACT_ABI,
     functionName: "getCurrentRoundInfo",
-  }) as { data: [bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };
+  }) as { data: [bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };  
 
   const roundInfo: RoundInfo | undefined = rawRoundInfo ? {
     roundNumber: rawRoundInfo[0],
@@ -82,7 +84,7 @@ export function useLotteryContract(
     address: contractAddress,
     abi: LOTTERY_CONTRACT_ABI,
     functionName: "lastParticipationTimestamp",
-    args: [contractAddress],
+    args: [address || '0x0'],
   });
 
   const enterLottery = async () => {

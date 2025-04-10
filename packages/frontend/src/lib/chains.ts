@@ -40,7 +40,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
     ...optimismSepolia,
     name: "Optimism Sepolia",
     iconUrl: "/chains/optimism.svg",
-    contractAddress: "0x3D90A64c52Bcbdb9B8b9bD305c6d92be9302CBEc" as `0x${string}`,
+    contractAddress: "0xEc2DA2C89eAC548cFb100d4c9630d4D2E320dA6E" as `0x${string}`,
     status: "hot",
   },
   ...(process.env.NODE_ENV === 'development' ? [] : []),

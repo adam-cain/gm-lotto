@@ -5,36 +5,38 @@ import { Chain } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
 import { useSwitchChain } from 'wagmi';
+import { useTimeCountdown } from '@/hooks/useTimeCountdown';
 
 interface ChainCardProps {
   chain: Chain;
   isConnected: boolean;
-} 
+}
 
 const ChainCard: React.FC<ChainCardProps> = ({
   chain,
   isConnected,
 }) => {
-  const { enterLottery } = useLotteryContract(chain.id, chain.contractAddress || '0x0');
+  const { enterLottery, lastParticipationTimestamp } = useLotteryContract(chain.id, chain.contractAddress || '0x0');
   const { chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
+  const time = useTimeCountdown(Number(lastParticipationTimestamp), Number(lastParticipationTimestamp) + 1000 * 60 * 60 * 24);
 
   const handleClick = async () => {
     setIsLoading(true);
     if (isConnected) {
-      if(chainId !== chain.id) {
-      switchChain({
-        chainId: chain.id,
-      });
-      let interval = setInterval(() => {
-        if(chainId !== chain.id) {
-          clearInterval(interval);
-        }
-      }, 1000);
-    }
-      
+      if (chainId !== chain.id) {
+        switchChain({
+          chainId: chain.id,
+        });
+        let interval = setInterval(() => {
+          if (chainId !== chain.id) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      }
+
       await enterLottery();
     } else {
       openConnectModal?.();
@@ -42,22 +44,22 @@ const ChainCard: React.FC<ChainCardProps> = ({
     setIsLoading(false);
   }
 
-  const buttonTextColor = chain.iconBackground 
+  const buttonTextColor = chain.iconBackground
     ? (() => {
-        // Remove the hash if it exists
-        const hex = chain.iconBackground.replace('#', '');
-        
-        // Convert hex to RGB
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-        
-        // Calculate luminance - determines if color is light or dark
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        // Return black for light colors, white for dark colors
-        return luminance > 0.5 ? 'black' : 'white';
-      })()
+      // Remove the hash if it exists
+      const hex = chain.iconBackground.replace('#', '');
+
+      // Convert hex to RGB
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+
+      // Calculate luminance - determines if color is light or dark
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+      // Return black for light colors, white for dark colors
+      return luminance > 0.5 ? 'black' : 'white';
+    })()
     : 'white'; // Default to white text if no color specified
 
   const statusBadge = {
@@ -80,15 +82,15 @@ const ChainCard: React.FC<ChainCardProps> = ({
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100  flex-shrink-0">
             {chain.iconUrl ? (
-            <Image
-              width={40}
-              height={40}
-              src={chain.iconUrl ? (typeof chain.iconUrl === 'string' ? chain.iconUrl : '/images/chains/optimism.svg') : '/images/chains/optimism.svg'}
-              alt={`${chain.name} logo`}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // If image fails to load, use a fallback
-                (e.target as HTMLImageElement).src = '/images/chains/optimism.svg';
+              <Image
+                width={40}
+                height={40}
+                src={chain.iconUrl ? (typeof chain.iconUrl === 'string' ? chain.iconUrl : '/images/chains/optimism.svg') : '/images/chains/optimism.svg'}
+                alt={`${chain.name} logo`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // If image fails to load, use a fallback
+                  (e.target as HTMLImageElement).src = '/images/chains/optimism.svg';
                 }}
               />
             ) : (
@@ -104,9 +106,21 @@ const ChainCard: React.FC<ChainCardProps> = ({
               </h3>
               {statusBadge[chain.status as keyof typeof statusBadge]}
             </div>
-            <p className="text-xs text-gray-500 ">
-              Connect wallet to GM
-            </p>
+            {time ?
+              <div className="flex items-center allign-middle gap-2">
+                <div className={`w-2 h-2 rounded-full bg-red-500`} />
+                <p className="text-xs text-gray-500 ">
+                  {time}
+                </p>
+              </div>
+              :
+              <div className="flex items-center allign-middle gap-2">
+                <div className={`w-2 h-2 rounded-full bg-green-500`} />
+                <p className="text-xs text-gray-500 ">
+                  Ready
+                </p>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -114,12 +128,11 @@ const ChainCard: React.FC<ChainCardProps> = ({
         <button
           onClick={() => handleClick()}
           disabled={isLoading}
-          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${
-            isLoading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          style={{ 
+          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          style={{
             backgroundColor: chain.iconBackground ?? '#000',
-            color: buttonTextColor 
+            color: buttonTextColor
           }}
         >
           {isLoading ? (
