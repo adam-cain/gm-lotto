@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "./GMLottoNFT.sol";
+
 contract GMLotto {
     // Immutable variables
     address public immutable feeRecipient;
-    // uint256 public immutable ENTRY_FEE;
+    GMLottoNFT public immutable ticketNFT;
     uint256 public constant ROUND_DURATION = 1 weeks;
     uint256 public constant WINNER_PERCENTAGE = 90; // 90% of pool goes to winner
     uint256 public constant FEE_PERCENTAGE = 10; // 10% goes to fee recipient
@@ -14,7 +16,7 @@ contract GMLotto {
         uint256 startTime;
         uint256 endTime;
         uint256 prizePool;
-        address[] participants;
+        uint256[] ticketIds;
         bool isActive;
         address winner;
     }
@@ -27,21 +29,17 @@ contract GMLotto {
     mapping(address => uint256) public lastParticipationTimestamp;
     
     // Events
-    event LotteryEntry(address indexed participant, uint256 roundNumber);
+    event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
     event RoundStarted(uint256 roundNumber, uint256 startTime);
     event RoundEnded(uint256 roundNumber, address winner, uint256 prize);
     
-    constructor(address _feeRecipient) {
+    constructor(address _feeRecipient, address _ticketNFT) {
         feeRecipient = _feeRecipient;
-        // ENTRY_FEE = _entryFee;
+        ticketNFT = GMLottoNFT(_ticketNFT);
         _startNewRound();
     }
     
     function enterLottery() external payable {
-        // if (msg.value != ENTRY_FEE) {
-        //     revert("Incorrect entry fee");
-        // }
-        
         // Check if user has participated in the last 24 hours
         if (block.timestamp < lastParticipationTimestamp[msg.sender] + 1 days) {
             revert("Must wait 24 hours between entries");
@@ -53,7 +51,6 @@ contract GMLotto {
         }
         
         if (block.timestamp >= round.endTime) {
-            // Could be handled by server or cron job
             _endRound();
             _startNewRound();
         }
@@ -61,11 +58,14 @@ contract GMLotto {
         // Update last participation timestamp
         lastParticipationTimestamp[msg.sender] = block.timestamp;
         
-        // Add participant to current round
-        round.participants.push(msg.sender);
+        // Mint NFT ticket
+        uint256 ticketId = ticketNFT.mint(msg.sender, currentRound);
+        
+        // Add ticket to current round
+        round.ticketIds.push(ticketId);
         round.prizePool += msg.value;
         
-        emit LotteryEntry(msg.sender, currentRound);
+        emit LotteryEntry(msg.sender, currentRound, ticketId);
     }
     
     function _startNewRound() private {
@@ -82,19 +82,20 @@ contract GMLotto {
         Round storage round = rounds[currentRound];
         round.isActive = false;
         
-        if (round.participants.length > 0) {
+        if (round.ticketIds.length > 0) {
             // Select winner using block data as source of randomness
             uint256 winnerIndex = uint256(
                 keccak256(
                     abi.encodePacked(
                         block.timestamp,
                         block.prevrandao,
-                        round.participants.length
+                        round.ticketIds.length
                     )
                 )
-            ) % round.participants.length;
+            ) % round.ticketIds.length;
             
-            address winner = round.participants[winnerIndex];
+            uint256 winningTicketId = round.ticketIds[winnerIndex];
+            address winner = ticketNFT.ownerOf(winningTicketId);
             round.winner = winner;
             
             // Calculate prize and fee amounts
@@ -119,7 +120,7 @@ contract GMLotto {
         uint256 startTime,
         uint256 endTime,
         uint256 prizePool,
-        uint256 participantCount,
+        uint256 ticketCount,
         bool isActive
     ) {
         Round storage round = rounds[currentRound];
@@ -128,13 +129,13 @@ contract GMLotto {
             round.startTime,
             round.endTime,
             round.prizePool,
-            round.participants.length,
+            round.ticketIds.length,
             round.isActive
         );
     }
     
-    function getRoundParticipants(uint256 roundNumber) external view returns (address[] memory) {
-        return rounds[roundNumber].participants;
+    function getRoundTickets(uint256 roundNumber) external view returns (uint256[] memory) {
+        return rounds[roundNumber].ticketIds;
     }
     
     function timeUntilRoundEnd() external view returns (uint256) {
