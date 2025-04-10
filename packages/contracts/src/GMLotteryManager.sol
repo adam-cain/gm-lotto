@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./GMLottoNFT.sol";
+import "./GMLotteryToken.sol";
 
-contract GMLotto {
+contract GMLotteryManager {
     // Immutable variables
     address public immutable feeRecipient;
-    GMLottoNFT public immutable ticketNFT;
+    GMLotteryToken public immutable ticketNFT;
     uint256 public constant ROUND_DURATION = 1 weeks;
     uint256 public constant WINNER_PERCENTAGE = 90; // 90% of pool goes to winner
     uint256 public constant FEE_PERCENTAGE = 10; // 10% goes to fee recipient
@@ -35,7 +35,7 @@ contract GMLotto {
     
     constructor(address _feeRecipient, address _ticketNFT) {
         feeRecipient = _feeRecipient;
-        ticketNFT = GMLottoNFT(_ticketNFT);
+        ticketNFT = GMLotteryToken(_ticketNFT);
         _startNewRound();
     }
     

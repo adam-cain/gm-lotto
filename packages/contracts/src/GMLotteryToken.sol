@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GMLottoNFT is ERC721, Ownable {
+contract GMLotteryToken is ERC721, Ownable {
     // Simple counter for token IDs
     uint256 private _nextTokenId;
 
