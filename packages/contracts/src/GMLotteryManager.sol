@@ -5,21 +5,20 @@ import "./GMLotteryToken.sol";
 
 contract GMLotteryManager {
     // Immutable variables
-    address public immutable feeRecipient;
+    address public immutable operator;
     GMLotteryToken public immutable ticketNFT;
     uint256 public constant ROUND_DURATION = 1 weeks;
-    uint256 public constant WINNER_PERCENTAGE = 90; // 90% of pool goes to winner
-    uint256 public constant FEE_PERCENTAGE = 10; // 10% goes to fee recipient
-    uint256 public constant MINIMUM_ENTRY_AMOUNT = 0.1 ether;
 
     // Lottery round tracking
     struct Round {
         uint256 startTime;
         uint256 endTime;
-        uint256 prizePool;
         uint256[] ticketIds;
         bool isActive;
         address winner;
+        uint256 prizeAmount;
+        bool prizeSet;
+        bool prizeClaimed;
     }
 
     // Current round number and rounds mapping
@@ -32,18 +31,17 @@ contract GMLotteryManager {
     // Events
     event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
     event RoundStarted(uint256 roundNumber, uint256 startTime);
-    event RoundEnded(uint256 roundNumber, address winner, uint256 prize);
+    event RoundEnded(uint256 roundNumber, address winner);
+    event PrizeSet(uint256 roundNumber, uint256 amount);
+    event PrizeClaimed(uint256 roundNumber, address winner, uint256 amount);
     
-    constructor(address _feeRecipient, address _ticketNFT) {
-        feeRecipient = _feeRecipient;
+    constructor(address _operator, address _ticketNFT) {
+        operator = _operator;
         ticketNFT = GMLotteryToken(_ticketNFT);
         _startNewRound();
     }
     
-    function enterLottery() external payable {
-        // Check minimum entry amount
-        require(msg.value >= MINIMUM_ENTRY_AMOUNT, "Entry amount too low");
-        
+    function enterLottery() external {
         // Check if user has participated in the last 24 hours
         if (block.timestamp < lastParticipationTimestamp[msg.sender] + 1 days) {
             revert("Must wait 24 hours between entries");
@@ -67,7 +65,6 @@ contract GMLotteryManager {
         
         // Add ticket to current round
         round.ticketIds.push(ticketId);
-        round.prizePool += msg.value;
         
         emit LotteryEntry(msg.sender, currentRound, ticketId);
     }
@@ -102,20 +99,37 @@ contract GMLotteryManager {
             address winner = ticketNFT.ownerOf(winningTicketId);
             round.winner = winner;
             
-            // Calculate prize and fee amounts
-            uint256 prizeAmount = (round.prizePool * WINNER_PERCENTAGE) / 100;
-            uint256 feeAmount = round.prizePool - prizeAmount;
-            
-            // Transfer prize to winner
-            (bool success1,) = winner.call{value: prizeAmount}("");
-            require(success1, "Prize transfer failed");
-            
-            // Transfer fee to fee recipient
-            (bool success2,) = feeRecipient.call{value: feeAmount}("");
-            require(success2, "Fee transfer failed");
-            
-            emit RoundEnded(currentRound, winner, prizeAmount);
+            emit RoundEnded(currentRound, winner);
         }
+    }
+
+    function setPrizeAmount(uint256 roundNumber, uint256 amount) external payable {
+        require(msg.sender == operator, "Only operator can set prize");
+        require(msg.value == amount, "Incorrect amount sent");
+        
+        Round storage round = rounds[roundNumber];
+        require(!round.isActive, "Round still active");
+        require(round.winner != address(0), "No winner for this round");
+        require(!round.prizeSet, "Prize already set");
+        require(!round.prizeClaimed, "Prize already claimed");
+        
+        round.prizeAmount = amount;
+        round.prizeSet = true;
+        
+        emit PrizeSet(roundNumber, amount);
+    }
+
+    function claimPrize(uint256 roundNumber) external {
+        Round storage round = rounds[roundNumber];
+        require(round.winner == msg.sender, "Not the winner");
+        require(round.prizeSet, "Prize not set");
+        require(!round.prizeClaimed, "Prize already claimed");
+        
+        round.prizeClaimed = true;
+        (bool success,) = msg.sender.call{value: round.prizeAmount}("");
+        require(success, "Prize transfer failed");
+        
+        emit PrizeClaimed(roundNumber, msg.sender, round.prizeAmount);
     }
     
     // View functions
@@ -123,7 +137,6 @@ contract GMLotteryManager {
         uint256 roundNumber,
         uint256 startTime,
         uint256 endTime,
-        uint256 prizePool,
         uint256 ticketCount,
         bool isActive
     ) {
@@ -132,7 +145,6 @@ contract GMLotteryManager {
             currentRound,
             round.startTime,
             round.endTime,
-            round.prizePool,
             round.ticketIds.length,
             round.isActive
         );
@@ -141,19 +153,23 @@ contract GMLotteryManager {
     function getRoundInfo(uint256 roundNumber) external view returns (
         uint256 startTime,
         uint256 endTime,
-        uint256 prizePool,
         uint256[] memory ticketIds,
         bool isActive,
-        address winner
+        address winner,
+        uint256 prizeAmount,
+        bool prizeSet,
+        bool prizeClaimed
     ) {
         Round storage round = rounds[roundNumber];
         return (
             round.startTime,
             round.endTime,
-            round.prizePool,
             round.ticketIds,
             round.isActive,
-            round.winner
+            round.winner,
+            round.prizeAmount,
+            round.prizeSet,
+            round.prizeClaimed
         );
     }
     

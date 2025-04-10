@@ -10,12 +10,12 @@ contract DeployGMLottery is Script {
         // Get the private key and deployer address from environment variables
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.envAddress("DEPLOYER_ADDRESS");
-        address feeRecipient = vm.envAddress("FEE_RECIPIENT");
+        address operator = vm.envAddress("OPERATOR_ADDRESS");
         
         // Validate environment variables
         require(deployerPrivateKey != 0, "PRIVATE_KEY not set");
         require(deployer != address(0), "DEPLOYER_ADDRESS not set");
-        require(feeRecipient != address(0), "FEE_RECIPIENT not set");
+        require(operator != address(0), "OPERATOR_ADDRESS not set");
         
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
@@ -25,7 +25,7 @@ contract DeployGMLottery is Script {
         console2.log("GMLotteryToken deployed to:", address(nft));
 
         // Deploy the lottery manager contract with the NFT contract address
-        GMLotteryManager lottery = new GMLotteryManager(feeRecipient, address(nft));
+        GMLotteryManager lottery = new GMLotteryManager(operator, address(nft));
         console2.log("GMLotteryManager deployed to:", address(lottery));
 
         // Transfer ownership of the NFT contract to the lottery contract
@@ -44,7 +44,7 @@ contract DeployGMLottery is Script {
         console2.log("\nDeployment Summary:");
         console2.log("NFT Contract:", address(nft));
         console2.log("Lottery Manager:", address(lottery));
-        console2.log("Fee Recipient:", feeRecipient);
+        console2.log("Operator:", operator);
         console2.log("Deployer:", deployer);
     }
 } 
