@@ -10,6 +10,7 @@ contract GMLotteryManager {
     uint256 public constant ROUND_DURATION = 1 weeks;
     uint256 public constant WINNER_PERCENTAGE = 90; // 90% of pool goes to winner
     uint256 public constant FEE_PERCENTAGE = 10; // 10% goes to fee recipient
+    uint256 public constant MINIMUM_ENTRY_AMOUNT = 0.1 ether;
 
     // Lottery round tracking
     struct Round {
@@ -40,6 +41,9 @@ contract GMLotteryManager {
     }
     
     function enterLottery() external payable {
+        // Check minimum entry amount
+        require(msg.value >= MINIMUM_ENTRY_AMOUNT, "Entry amount too low");
+        
         // Check if user has participated in the last 24 hours
         if (block.timestamp < lastParticipationTimestamp[msg.sender] + 1 days) {
             revert("Must wait 24 hours between entries");
@@ -131,6 +135,25 @@ contract GMLotteryManager {
             round.prizePool,
             round.ticketIds.length,
             round.isActive
+        );
+    }
+    
+    function getRoundInfo(uint256 roundNumber) external view returns (
+        uint256 startTime,
+        uint256 endTime,
+        uint256 prizePool,
+        uint256[] memory ticketIds,
+        bool isActive,
+        address winner
+    ) {
+        Round storage round = rounds[roundNumber];
+        return (
+            round.startTime,
+            round.endTime,
+            round.prizePool,
+            round.ticketIds,
+            round.isActive,
+            round.winner
         );
     }
     

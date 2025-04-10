@@ -30,6 +30,11 @@ contract GMLotteryToken is ERC721, Ownable {
         return tokenId;
     }
 
+    function _isAuthorized(address owner, address spender, uint256 tokenId) internal view virtual override returns (bool) {
+        // Only allow minting, no transfers
+        return spender == owner && _ownerOf(tokenId) == address(0);
+    }
+
     function getUserTickets(address user) external view returns (uint256[] memory) {
         return _userTickets[user];
     }
