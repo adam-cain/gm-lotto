@@ -14,6 +14,7 @@ contract GMLotteryTest is Test {
     address public user3 = address(0x3);
     uint256 public constant INITIAL_TIMESTAMP = 1000000;
     uint256 public constant PRIZE_AMOUNT = 1 ether;
+    uint256 public constant ROUND_DURATION = 1 weeks;
 
     event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
     event RoundStarted(uint256 roundNumber, uint256 startTime);
@@ -27,7 +28,7 @@ contract GMLotteryTest is Test {
         
         // Deploy contracts
         ticketNFT = new GMLotteryToken();
-        lotteryManager = new GMLotteryManager(operator, address(ticketNFT));
+        lotteryManager = new GMLotteryManager(operator, address(ticketNFT), ROUND_DURATION);
         
         // Transfer ownership of NFT contract to lottery manager
         ticketNFT.transferOwnership(address(lotteryManager));

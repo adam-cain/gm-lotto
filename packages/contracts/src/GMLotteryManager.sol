@@ -7,7 +7,7 @@ contract GMLotteryManager {
     // Immutable variables
     address public immutable operator;
     GMLotteryToken public immutable ticketNFT;
-    uint256 public constant ROUND_DURATION = 1 weeks;
+    uint256 public immutable roundDuration;
 
     // Lottery round tracking
     struct Round {
@@ -35,9 +35,11 @@ contract GMLotteryManager {
     event PrizeSet(uint256 roundNumber, uint256 amount);
     event PrizeClaimed(uint256 roundNumber, address winner, uint256 amount);
     
-    constructor(address _operator, address _ticketNFT) {
+    constructor(address _operator, address _ticketNFT, uint256 _roundDuration) {
+        require(_roundDuration > 0, "Round duration must be greater than 0");
         operator = _operator;
         ticketNFT = GMLotteryToken(_ticketNFT);
+        roundDuration = _roundDuration;
         _startNewRound();
     }
     
@@ -73,7 +75,7 @@ contract GMLotteryManager {
         currentRound++;
         Round storage newRound = rounds[currentRound];
         newRound.startTime = block.timestamp;
-        newRound.endTime = block.timestamp + ROUND_DURATION;
+        newRound.endTime = block.timestamp + roundDuration;
         newRound.isActive = true;
         
         emit RoundStarted(currentRound, newRound.startTime);
