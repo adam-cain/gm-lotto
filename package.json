@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd packages/contracts && forge test",
     "dev": "cd packages/frontend && npm run dev",
     "build:frontend": "cd packages/frontend && npm run build",
     "build:contract": "cd packages/contracts && forge build",
