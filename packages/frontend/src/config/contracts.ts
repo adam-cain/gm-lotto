@@ -5,51 +5,35 @@ export const LOTTERY_CONTRACT_ABI = [
         "type": "constructor",
         "inputs": [
             {
-                "name": "_feeRecipient",
+                "name": "_operator",
                 "type": "address",
                 "internalType": "address"
+            },
+            {
+                "name": "_ticketNFT",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "_roundDuration",
+                "type": "uint256",
+                "internalType": "uint256"
             }
         ],
         "stateMutability": "nonpayable"
     },
     {
         "type": "function",
-        "name": "FEE_PERCENTAGE",
-        "inputs": [],
-        "outputs": [
+        "name": "claimPrize",
+        "inputs": [
             {
-                "name": "",
+                "name": "roundNumber",
                 "type": "uint256",
                 "internalType": "uint256"
             }
         ],
-        "stateMutability": "view"
-    },
-    {
-        "type": "function",
-        "name": "ROUND_DURATION",
-        "inputs": [],
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "stateMutability": "view"
-    },
-    {
-        "type": "function",
-        "name": "WINNER_PERCENTAGE",
-        "inputs": [],
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "stateMutability": "view"
+        "outputs": [],
+        "stateMutability": "nonpayable"
     },
     {
         "type": "function",
@@ -69,20 +53,7 @@ export const LOTTERY_CONTRACT_ABI = [
         "name": "enterLottery",
         "inputs": [],
         "outputs": [],
-        "stateMutability": "payable"
-    },
-    {
-        "type": "function",
-        "name": "feeRecipient",
-        "inputs": [],
-        "outputs": [
-            {
-                "name": "",
-                "type": "address",
-                "internalType": "address"
-            }
-        ],
-        "stateMutability": "view"
+        "stateMutability": "nonpayable"
     },
     {
         "type": "function",
@@ -105,12 +76,7 @@ export const LOTTERY_CONTRACT_ABI = [
                 "internalType": "uint256"
             },
             {
-                "name": "prizePool",
-                "type": "uint256",
-                "internalType": "uint256"
-            },
-            {
-                "name": "participantCount",
+                "name": "ticketCount",
                 "type": "uint256",
                 "internalType": "uint256"
             },
@@ -124,7 +90,61 @@ export const LOTTERY_CONTRACT_ABI = [
     },
     {
         "type": "function",
-        "name": "getRoundParticipants",
+        "name": "getRoundInfo",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "startTime",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "endTime",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "ticketIds",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            },
+            {
+                "name": "isActive",
+                "type": "bool",
+                "internalType": "bool"
+            },
+            {
+                "name": "winner",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "prizeAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "prizeSet",
+                "type": "bool",
+                "internalType": "bool"
+            },
+            {
+                "name": "prizeClaimed",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getRoundTickets",
         "inputs": [
             {
                 "name": "roundNumber",
@@ -135,8 +155,8 @@ export const LOTTERY_CONTRACT_ABI = [
         "outputs": [
             {
                 "name": "",
-                "type": "address[]",
-                "internalType": "address[]"
+                "type": "uint256[]",
+                "internalType": "uint256[]"
             }
         ],
         "stateMutability": "view"
@@ -151,6 +171,32 @@ export const LOTTERY_CONTRACT_ABI = [
                 "internalType": "address"
             }
         ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "operator",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "roundDuration",
+        "inputs": [],
         "outputs": [
             {
                 "name": "",
@@ -182,11 +228,6 @@ export const LOTTERY_CONTRACT_ABI = [
                 "internalType": "uint256"
             },
             {
-                "name": "prizePool",
-                "type": "uint256",
-                "internalType": "uint256"
-            },
-            {
                 "name": "isActive",
                 "type": "bool",
                 "internalType": "bool"
@@ -195,6 +236,52 @@ export const LOTTERY_CONTRACT_ABI = [
                 "name": "winner",
                 "type": "address",
                 "internalType": "address"
+            },
+            {
+                "name": "prizeAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "prizeSet",
+                "type": "bool",
+                "internalType": "bool"
+            },
+            {
+                "name": "prizeClaimed",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "setPrizeAmount",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "function",
+        "name": "ticketNFT",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract GMLotteryToken"
             }
         ],
         "stateMutability": "view"
@@ -227,6 +314,56 @@ export const LOTTERY_CONTRACT_ABI = [
                 "type": "uint256",
                 "indexed": false,
                 "internalType": "uint256"
+            },
+            {
+                "name": "ticketId",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "PrizeClaimed",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "winner",
+                "type": "address",
+                "indexed": false,
+                "internalType": "address"
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "PrizeSet",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
             }
         ],
         "anonymous": false
@@ -246,12 +383,6 @@ export const LOTTERY_CONTRACT_ABI = [
                 "type": "address",
                 "indexed": false,
                 "internalType": "address"
-            },
-            {
-                "name": "prize",
-                "type": "uint256",
-                "indexed": false,
-                "internalType": "uint256"
             }
         ],
         "anonymous": false
@@ -275,4 +406,4 @@ export const LOTTERY_CONTRACT_ABI = [
         ],
         "anonymous": false
     }
-]; 
+] as const;

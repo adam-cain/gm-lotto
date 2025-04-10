@@ -15,14 +15,26 @@ export interface RoundInfo {
   roundNumber: bigint;
   startTime: bigint;
   endTime: bigint;
-  prizePool: bigint;
-  participantCount: bigint;
+  ticketCount: bigint;
   isActive: boolean;
   // Converted values
-  formattedPrizePool: string;
-  formattedParticipantCount: number;
   formattedStartTime: Date;
   formattedEndTime: Date;
+}
+
+export interface FullRoundInfo {
+  startTime: bigint;
+  endTime: bigint;
+  ticketIds: bigint[];
+  isActive: boolean;
+  winner: `0x${string}`;
+  prizeAmount: bigint;
+  prizeSet: boolean;
+  prizeClaimed: boolean;
+  // Converted values
+  formattedStartTime: Date;
+  formattedEndTime: Date;
+  formattedPrizeAmount: string;
 }
 
 export function useLotteryContract(
@@ -38,29 +50,25 @@ export function useLotteryContract(
     address: contractAddress,
     abi: LOTTERY_CONTRACT_ABI,
     functionName: "getCurrentRoundInfo",
-  }) as { data: [bigint, bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };
+  }) as { data: [bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };
 
   const roundInfo: RoundInfo | undefined = rawRoundInfo ? {
     roundNumber: rawRoundInfo[0],
     startTime: rawRoundInfo[1],
     endTime: rawRoundInfo[2],
-    prizePool: rawRoundInfo[3],
-    participantCount: rawRoundInfo[4],
-    isActive: rawRoundInfo[5],
+    ticketCount: rawRoundInfo[3],
+    isActive: rawRoundInfo[4],
     // Converted values
-    formattedPrizePool: formatEther(rawRoundInfo[3]),
-    formattedParticipantCount: Number(rawRoundInfo[4]),
     formattedStartTime: new Date(Number(rawRoundInfo[1]) * 1000),
     formattedEndTime: new Date(Number(rawRoundInfo[2]) * 1000)
   } : undefined;
 
-
+  // Get current round number
   const { data: currentRound } = useReadContract({
     address: contractAddress,
     abi: LOTTERY_CONTRACT_ABI,
     functionName: "currentRound",
   });
-
 
   // Get time until round end
   const { data: timeUntilEnd } = useReadContract({
@@ -69,7 +77,14 @@ export function useLotteryContract(
     functionName: "timeUntilRoundEnd",
   });
 
-  
+  // Get last participation timestamp for current user
+  const { data: lastParticipationTimestamp } = useReadContract({
+    address: contractAddress,
+    abi: LOTTERY_CONTRACT_ABI,
+    functionName: "lastParticipationTimestamp",
+    args: [contractAddress],
+  });
+
   const enterLottery = async () => {
     try {
       // Switch to the correct chain first
@@ -77,17 +92,103 @@ export function useLotteryContract(
         chainId: chainId,
       });
 
-      await writeContract({
+      const result = await writeContract({
         abi: LOTTERY_CONTRACT_ABI,
         address: contractAddress,
         functionName: "enterLottery",
-        value: BigInt(0), // Send 0 ETH since the contract is deployed with 0 entry fee
       });
 
+      setTxHash(result as unknown as `0x${string}`);
       return true;
     } catch (error) {
       console.error("Error entering lottery:", error);
       throw error;
+    }
+  };
+
+  const setPrizeAmount = async (roundNumber: bigint, amount: bigint) => {
+    try {
+      await switchChain({
+        chainId: chainId,
+      });
+
+      const result = await writeContract({
+        abi: LOTTERY_CONTRACT_ABI,
+        address: contractAddress,
+        functionName: "setPrizeAmount",
+        args: [roundNumber, amount],
+        value: amount,
+      });
+
+      setTxHash(result as unknown as `0x${string}`);
+      return true;
+    } catch (error) {
+      console.error("Error setting prize amount:", error);
+      throw error;
+    }
+  };
+
+  const claimPrize = async (roundNumber: bigint) => {
+    try {
+      await switchChain({
+        chainId: chainId,
+      });
+
+      const result = await writeContract({
+        abi: LOTTERY_CONTRACT_ABI,
+        address: contractAddress,
+        functionName: "claimPrize",
+        args: [roundNumber],
+      });
+
+      setTxHash(result as unknown as `0x${string}`);
+      return true;
+    } catch (error) {
+      console.error("Error claiming prize:", error);
+      throw error;
+    }
+  };
+
+  // Get full round info
+  const getRoundInfo = async (roundNumber: bigint): Promise<FullRoundInfo | undefined> => {
+    try {
+      const { data } = await useReadContract({
+        address: contractAddress,
+        abi: LOTTERY_CONTRACT_ABI,
+        functionName: "getRoundInfo",
+        args: [roundNumber],
+      });
+
+      if (!data) return undefined;
+
+      const [
+        startTime,
+        endTime,
+        ticketIds,
+        isActive,
+        winner,
+        prizeAmount,
+        prizeSet,
+        prizeClaimed
+      ] = data as [bigint, bigint, bigint[], boolean, `0x${string}`, bigint, boolean, boolean];
+
+      return {
+        startTime,
+        endTime,
+        ticketIds,
+        isActive,
+        winner,
+        prizeAmount,
+        prizeSet,
+        prizeClaimed,
+        // Converted values
+        formattedStartTime: new Date(Number(startTime) * 1000),
+        formattedEndTime: new Date(Number(endTime) * 1000),
+        formattedPrizeAmount: formatEther(prizeAmount),
+      };
+    } catch (error) {
+      console.error("Error getting round info:", error);
+      return undefined;
     }
   };
 
@@ -96,21 +197,15 @@ export function useLotteryContract(
     hash: txHash,
   });
 
-  // Get participants for current round
-  const { data: participants } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_CONTRACT_ABI,
-    functionName: "getRoundParticipants",
-    args: [currentRound],
-  });
-
   return {
     roundInfo,
     currentRound,
     timeUntilEnd,
-    // entryFee,
-    participants,
+    lastParticipationTimestamp,
     enterLottery,
+    setPrizeAmount,
+    claimPrize,
+    getRoundInfo,
     isEntering,
     hasEntered,
     refetchRoundInfo,
