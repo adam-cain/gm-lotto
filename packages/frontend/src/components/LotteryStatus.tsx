@@ -20,60 +20,26 @@ const formatTimeRemaining = (seconds: number | undefined): string => {
 
 export default function LotteryStatus() {
 	const chainId = chains[0].id;
-	const contractAddress = chains[0].contractAddress as `0x${string}`;
-	const [countdown, setCountdown] = useState<number | undefined>(undefined);
+	const contractAddress = chains[0].managerAddress as `0x${string}`;
+	const tokenAddress = chains[0].tokenAddress as `0x${string}`;
 
 	const {
 		roundInfo,
 		currentRound,
 		timeUntilEnd,
-		lastParticipationTimestamp,
-		enterLottery,
-		setPrizeAmount,
-		claimPrize,
-		getRoundInfo,
-		isEntering,
-		hasEntered,
-		refetchRoundInfo,
-	} = useLotteryContract(chainId, contractAddress);
+	} = useLotteryContract(chainId, contractAddress, tokenAddress);
 
-	const time = useCountdown(Number(timeUntilEnd), 'timeLeft');
-
-	// useEffect(() => {
-	// 	if (!timeUntilEnd) return;
-
-	// 	// Set initial countdown
-	// 	setCountdown(Number(timeUntilEnd));
-
-	// 	// Update countdown every second
-	// 	const interval = setInterval(() => {
-	// 		setCountdown(prev => {
-	// 			if (prev === undefined || prev <= 0) return 0;
-	// 			return prev - 1;
-	// 		});
-	// 	}, 1000);
-
-	// 	return () => clearInterval(interval);
-	// }, [timeUntilEnd]);
+	const time = useCountdown(Number(timeUntilEnd), 'timeLeft', 3);
 
 	return (
 		<div className="bg-white rounded-xl shadow-sm p-4">
 			<div className="flex items-center align-middle mb-2 gap-2">
-				<h3 className="text-lg font-semibold">Lottery Status</h3>
+				<h3 className="text-lg font-semibold">Round #{currentRound}</h3>
 			</div>
 
 			{roundInfo ? (
 				<div className="space-y-2">
-					<div className="flex items-center justify-between">
-						<span className="text-sm text-gray-500">Round</span>
-						<span className="text-sm font-mono">#{Number(roundInfo.roundNumber)}</span>
-					</div>
-
-					<div className="flex items-center justify-between">
-						<span className="text-sm text-gray-500">Participants</span>
-						<span className="text-sm">{roundInfo.ticketCount}</span>
-					</div>
-
+					{/* Time remaining */}
 					<div className="flex items-center justify-between">
 						<span className="text-sm text-gray-500">Time Remaining</span>
 						<span className="text-sm font-mono">
@@ -81,12 +47,22 @@ export default function LotteryStatus() {
 						</span>
 					</div>
 
+					{/* Participants */}
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-gray-500">Status</span>
+						<span className="text-sm text-gray-500">Total Tickets</span>
+						<span className="text-sm">{roundInfo.ticketCount}</span>
+					</div>
+
+
+
+					{/* <hr className="my-2 border-gray-200" />
+					<div className="flex items-center justify-between">
+						<span className="text-sm text-gray-500">Your Stats</span>
 						<span className="text-sm">
 							{roundInfo.isActive ? 'Active' : 'Closed'}
 						</span>
-					</div>
+					</div> */}
+					
 				</div>
 			) : (
 				<div className="text-sm text-gray-500">Loading lottery information...</div>

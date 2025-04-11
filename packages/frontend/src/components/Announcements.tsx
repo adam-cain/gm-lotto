@@ -30,19 +30,7 @@ const winners: Winner[] = [
     address: "0x3456789012abcdef3456789012abcdef34567890",
     amount: "2.2 ETH",
     date: "2025-03-13"
-  },
-  {
-    id: 4,
-    address: "0x4567890123abcdef4567890123abcdef45678901",
-    amount: "0.5 ETH",
-    date: "2025-03-12"
-  },
-  {
-    id: 5,
-    address: "0x5678901234abcdef5678901234abcdef56789012",
-    amount: "1.0 ETH",
-    date: "2025-03-11"
-  },
+  }
 ];
 
 const Announcements: React.FC = () => {

@@ -1,5 +1,3 @@
-export const LOTTERY_CONTRACT_ADDRESS = '0x5A9d7C744C9853c26d43EaBDf866151603aAB469';
-
 export const LOTTERY_CONTRACT_ABI = [
     {
         "type": "constructor",
@@ -300,6 +298,19 @@ export const LOTTERY_CONTRACT_ABI = [
         "stateMutability": "view"
     },
     {
+        "type": "function",
+        "name": "isPaused",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
         "type": "event",
         "name": "LotteryEntry",
         "inputs": [
@@ -405,5 +416,89 @@ export const LOTTERY_CONTRACT_ABI = [
             }
         ],
         "anonymous": false
+    }
+] as const;
+
+export const LOTTERY_TOKEN_ABI = [
+    {
+        "type": "function",
+        "name": "getUserTickets",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getUserTicketCount",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getTicketRound",
+        "inputs": [
+            {
+                "name": "tokenId",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getUserTicketsForRound",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            }
+        ],
+        "stateMutability": "view"
     }
 ] as const;

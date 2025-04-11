@@ -8,9 +8,10 @@ type CountdownMode = 'endTime' | 'timeLeft';
  *
  * @param {number} time - The time value in Unix timestamp (seconds)
  * @param {CountdownMode} mode - Whether the time parameter represents an end time or time left
+ * @param {number} depth - How many time units to show (e.g. 2 would show days and hours, or hours and minutes)
  * @returns {string} A formatted string like "1d 3h 5m 10s" or null if the countdown is over.
  */
-function useCountdown(time: number, mode: CountdownMode = 'endTime') {
+function useCountdown(time: number, mode: CountdownMode = 'endTime', depth: number = 4) {
   // Helper function to calculate the remaining time (in milliseconds)
   const calculateTimeLeft = () => {
     const now = new Date().getTime(); // Current time in milliseconds
@@ -36,10 +37,41 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime') {
     const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
     const parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
-    if (seconds > 0) parts.push(`${seconds}s`);
+    let remainingDepth = depth;
+
+    if (days > 0 && remainingDepth > 0) {
+      parts.push(`${days}d`);
+      remainingDepth--;
+      if (remainingDepth > 0) {
+        parts.push(`${hours}h`);
+        remainingDepth--;
+        if (remainingDepth > 0) {
+          parts.push(`${minutes}m`);
+          remainingDepth--;
+          if (remainingDepth > 0) {
+            parts.push(`${seconds}s`);
+          }
+        }
+      }
+    } else if (hours > 0 && remainingDepth > 0) {
+      parts.push(`${hours}h`);
+      remainingDepth--;
+      if (remainingDepth > 0) {
+        parts.push(`${minutes}m`);
+        remainingDepth--;
+        if (remainingDepth > 0) {
+          parts.push(`${seconds}s`);
+        }
+      }
+    } else if (minutes > 0 && remainingDepth > 0) {
+      parts.push(`${minutes}m`);
+      remainingDepth--;
+      if (remainingDepth > 0) {
+        parts.push(`${seconds}s`);
+      }
+    } else if (remainingDepth > 0) {
+      parts.push(`${seconds}s`);
+    }
     
     return parts.join(' ') || null;
   };

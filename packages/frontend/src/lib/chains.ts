@@ -32,7 +32,8 @@ export type NetworkStatus = "regular" | "hot" | "new";
 
 export interface Chain extends RainbowKitChain {
   status?: NetworkStatus;
-  contractAddress?: `0x${string}`;
+  managerAddress?: `0x${string}`;
+  tokenAddress?: `0x${string}`;
 }
 
 export const chains: readonly [Chain, ...Chain[]] = [
@@ -40,7 +41,8 @@ export const chains: readonly [Chain, ...Chain[]] = [
     ...optimismSepolia,
     name: "Optimism Sepolia",
     iconUrl: "/chains/optimism.svg",
-    contractAddress: "0xEc2DA2C89eAC548cFb100d4c9630d4D2E320dA6E" as `0x${string}`,
+    managerAddress: "0xBA4501c8eA245D49D20312fAdA9AE61b1980189B" as `0x${string}`,
+    tokenAddress: "0xe99c35B64eb21A067a7b3E5DC390994F88f50fe0" as `0x${string}`,
     status: "hot",
   },
   ...(process.env.NODE_ENV === 'development' ? [] : []),

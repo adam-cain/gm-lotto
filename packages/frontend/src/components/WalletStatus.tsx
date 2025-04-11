@@ -28,6 +28,7 @@ const WalletStatus = () => {
   };
 
   return (
+    isConnected &&
     <div className="bg-white  rounded-xl shadow-sm p-4">
       <div className="flex items-center allign-middle mb-2 gap-2">
         <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -47,12 +48,6 @@ const WalletStatus = () => {
               <span className="text-sm inline-flex items-center gap-1">
                 <Image src={getNetworkImage()} alt={getNetworkName()} width={20} height={20} className='rounded-full'/> 
                 {getNetworkName()}</span>
-              {getChainStatus() === 'hot' && (
-                <span className="bg-orange-500 text-white text-xs px-1.5 rounded-full">Hot</span>
-              )}
-              {getChainStatus() === 'new' && (
-                <span className="bg-green-500 text-white text-xs px-1.5 rounded-full">New</span>
-              )}
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -61,12 +56,6 @@ const WalletStatus = () => {
               {balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : 'Loading...'}
             </span>
           </div>
-          <button 
-            onClick={() => disconnect()}
-            className="w-full mt-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors text-sm"
-          >
-            Disconnect
-          </button>
         </div>
       ) : (
         <div className="space-y-2">

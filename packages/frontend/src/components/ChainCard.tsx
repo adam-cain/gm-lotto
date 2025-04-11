@@ -4,7 +4,6 @@ import { useLotteryContract } from '@/hooks/useLotteryContract';
 import { Chain } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
-import { useSwitchChain } from 'wagmi';
 import useCountdown from '@/hooks/useCountdown';
 
 interface ChainCardProps {
@@ -16,34 +15,19 @@ const ChainCard: React.FC<ChainCardProps> = ({
   chain,
   isConnected,
 }) => {
-  const { enterLottery, lastParticipationTimestamp } = useLotteryContract(chain.id, chain.contractAddress || '0x0');
+  const { enterLottery, lastParticipationTimestamp } = useLotteryContract(chain.id, chain.managerAddress || '0x0', chain.tokenAddress || '0x0');
   const { chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { switchChain } = useSwitchChain();
+  const account = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   // unix timestamp for 24 hours from now
   const endTime = Number(lastParticipationTimestamp) + 60 * 60 * 24
   const time = useCountdown(endTime, "endTime");
 
-  if (chain.id === 11155420) {
-    console.log("time:", endTime, time);
-  }
-
   const handleClick = async () => {
     setIsLoading(true);
     if (isConnected) {
-      if (chainId !== chain.id) {
-        switchChain({
-          chainId: chain.id,
-        });
-        let interval = setInterval(() => {
-          if (chainId !== chain.id) {
-            clearInterval(interval);
-          }
-        }, 1000);
-      }
-
-      await enterLottery();
+      enterLottery();
     } else {
       openConnectModal?.();
     }
@@ -82,8 +66,29 @@ const ChainCard: React.FC<ChainCardProps> = ({
     regular: null,
   };
 
+  const StatusIndicator = ({ color, text }: { color: string; text: string }) => (
+    <div className="flex items-center allign-middle gap-2">
+      <div className={`w-2 h-2 rounded-full bg-${color}-500`} />
+      <p className="text-xs text-gray-500">{text}</p>
+    </div>
+  );
+
+  const ConnectionStatus = ({ isConnected, time }: { isConnected: boolean; time: string | null }) => {
+    if (!isConnected) {
+      return <StatusIndicator color="red" text="Not connected" />;
+    }
+
+    if (time) {
+      return <StatusIndicator color="red" text={time} />;
+    }
+
+    return <StatusIndicator color="green" text="Ready" />;
+  };
+
+  // scale 1.025
+
   return (
-    <div className="bg-white  rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white  rounded-xl shadow-sm overflow-hidden hover:scale-[102.5%] transition-all duration-200">
       <div className="p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100  flex-shrink-0">
@@ -112,28 +117,16 @@ const ChainCard: React.FC<ChainCardProps> = ({
               </h3>
               {statusBadge[chain.status as keyof typeof statusBadge]}
             </div>
-            {time ?
-              <div className="flex items-center allign-middle gap-2">
-                <div className={`w-2 h-2 rounded-full bg-red-500`} />
-                <p className="text-xs text-gray-500 ">
-                  {time}
-                </p>
-              </div>
-              :
-              <div className="flex items-center allign-middle gap-2">
-                <div className={`w-2 h-2 rounded-full bg-green-500`} />
-                <p className="text-xs text-gray-500 ">
-                  Ready
-                </p>
-              </div>
-            }
+            <ConnectionStatus isConnected={account.isConnected} time={time} />
           </div>
         </div>
       </div>
       <div className="px-4 pb-4">
         <button
           onClick={() => handleClick()}
-          disabled={isLoading || time !== null}
+          disabled={isLoading
+            || time !== null
+          }
           className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           style={{
@@ -144,7 +137,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
           {isLoading ? (
             'Connecting...'
           ) : isConnected ? (
-            chainId === chain.id ? `GM on ${chain.name}` : `Switch to ${chain.name}`
+            chainId === chain.id ? `GM on ${chain.name}` : `Switch chain`
           ) : (
             'Connect Wallet'
           )}
