@@ -5,7 +5,7 @@ import { Chain } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
 import { useSwitchChain } from 'wagmi';
-import { useTimeCountdown } from '@/hooks/useTimeCountdown';
+import useCountdown from '@/hooks/useCountdown';
 
 interface ChainCardProps {
   chain: Chain;
@@ -21,7 +21,13 @@ const ChainCard: React.FC<ChainCardProps> = ({
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
-  const time = useTimeCountdown(Number(lastParticipationTimestamp), Number(lastParticipationTimestamp) + 1000 * 60 * 60 * 24);
+  // unix timestamp for 24 hours from now
+  const endTime = Number(lastParticipationTimestamp) + 60 * 60 * 24
+  const time = useCountdown(endTime);
+
+  if (chain.id === 11155420) {
+    console.log("time:", endTime, time);
+  }
 
   const handleClick = async () => {
     setIsLoading(true);
@@ -127,7 +133,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
       <div className="px-4 pb-4">
         <button
           onClick={() => handleClick()}
-          disabled={isLoading}
+          disabled={isLoading || time !== null}
           className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           style={{
