@@ -15,61 +15,51 @@ import { useState } from "react";
 /**
  * Interface representing basic round information
  * @property roundNumber - The current round number
- * @property startTime - Unix timestamp when the round started
  * @property endTime - Unix timestamp when the round ends
  * @property ticketCount - Number of tickets in the current round
- * @property isActive - Whether the round is currently active
- * @property formattedStartTime - Formatted start time as Date object
- * @property formattedEndTime - Formatted end time as Date object
+ * @property userTicketCount - Number of tickets owned by the user
+ * @property pastRounds - Array of past round numbers
  */
 export interface RoundInfo {
   roundNumber: bigint;
-  startTime: bigint;
   endTime: bigint;
   ticketCount: bigint;
-  isActive: boolean;
-  formattedStartTime: Date;
-  formattedEndTime: Date;
+  userTicketCount: bigint;
+  pastRounds: bigint[];
 }
 
 /**
  * Interface representing detailed round information
  * @property startTime - Unix timestamp when the round started
  * @property endTime - Unix timestamp when the round ends
- * @property ticketIds - Array of ticket IDs in this round
+ * @property roundTicketCount - Number of tickets in the round
+ * @property userRoundTicketCount - Number of tickets owned by the user in this round
  * @property isActive - Whether the round is currently active
  * @property winner - Address of the round winner
  * @property prizeAmount - Amount of prize in wei
  * @property prizeSet - Whether the prize has been set
  * @property prizeClaimed - Whether the prize has been claimed
- * @property formattedStartTime - Formatted start time as Date object
- * @property formattedEndTime - Formatted end time as Date object
- * @property formattedPrizeAmount - Formatted prize amount in ether
  */
 export interface FullRoundInfo {
   startTime: bigint;
   endTime: bigint;
-  ticketIds: bigint[];
+  roundTicketCount: bigint;
+  userRoundTicketCount: bigint;
   isActive: boolean;
   winner: `0x${string}`;
   prizeAmount: bigint;
   prizeSet: boolean;
   prizeClaimed: boolean;
-  formattedStartTime: Date;
-  formattedEndTime: Date;
-  formattedPrizeAmount: string;
 }
 
 /**
- * Interface representing ticket information
- * @property tokenId - Unique identifier of the ticket
- * @property roundNumber - Round number the ticket belongs to
- * @property owner - Address of the ticket owner
+ * Interface representing user state
+ * @property lastParticipation - Last participation timestamp
+ * @property participationCount - Number of participations
  */
-export interface TicketInfo {
-  tokenId: bigint;
-  roundNumber: bigint;
-  owner: `0x${string}`;
+export interface UserState {
+  lastParticipation: bigint;
+  participationCount: bigint;
 }
 
 /**
@@ -107,17 +97,15 @@ export function useLotteryContract(
   const { data: rawRoundInfo, refetch: refetchRoundInfo } = useReadContract({
     ...contractData,
     functionName: "getCurrentRoundInfo",
-  }) as { data: [bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };  
+  }) as { data: [bigint, bigint, bigint, bigint, bigint[]] | undefined; refetch: () => void };  
 
-  // Format round information with timestamps
+  // Format round information
   const roundInfo: RoundInfo | undefined = rawRoundInfo ? {
     roundNumber: rawRoundInfo[0],
-    startTime: rawRoundInfo[1],
-    endTime: rawRoundInfo[2],
-    ticketCount: rawRoundInfo[3],
-    isActive: rawRoundInfo[4],
-    formattedStartTime: new Date(Number(rawRoundInfo[1]) * 1000),
-    formattedEndTime: new Date(Number(rawRoundInfo[2]) * 1000)
+    endTime: rawRoundInfo[1],
+    ticketCount: rawRoundInfo[2],
+    userTicketCount: rawRoundInfo[3],
+    pastRounds: rawRoundInfo[4]
   } : undefined;
 
   // Get current round number
@@ -132,12 +120,12 @@ export function useLotteryContract(
     functionName: "timeUntilRoundEnd",
   });
 
-  // Get user's last participation timestamp
-  const { data: lastParticipationTimestamp } = useReadContract({
+  // Get user's state
+  const { data: userState } = useReadContract({
     ...contractData,
-    functionName: "lastParticipationTimestamp",
+    functionName: "userStates",
     args: [address || '0x0'],
-  });
+  }) as { data: [bigint, bigint] | undefined };
 
   // Get user's ticket IDs
   const { data: userTickets } = useReadContract({
@@ -251,33 +239,20 @@ export function useLotteryContract(
         ...contractData,
         functionName: "getRoundInfo",
         args: [roundNumber],
-      });
+      }) as { data: [bigint, bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean] | undefined };
 
       if (!data) return undefined;
 
-      const [
-        startTime,
-        endTime,
-        ticketIds,
-        isActive,
-        winner,
-        prizeAmount,
-        prizeSet,
-        prizeClaimed
-      ] = data as [bigint, bigint, bigint[], boolean, `0x${string}`, bigint, boolean, boolean];
-
       return {
-        startTime,
-        endTime,
-        ticketIds,
-        isActive,
-        winner,
-        prizeAmount,
-        prizeSet,
-        prizeClaimed,
-        formattedStartTime: new Date(Number(startTime) * 1000),
-        formattedEndTime: new Date(Number(endTime) * 1000),
-        formattedPrizeAmount: formatEther(prizeAmount),
+        startTime: data[0],
+        endTime: data[1],
+        roundTicketCount: data[2],
+        userRoundTicketCount: data[3],
+        isActive: data[4],
+        winner: data[5],
+        prizeAmount: data[6],
+        prizeSet: data[7],
+        prizeClaimed: data[8]
       };
     } catch (error) {
       console.error("Error getting round info:", error);
@@ -306,21 +281,21 @@ export function useLotteryContract(
   };
 
   /**
-   * Get user's tickets for a specific round
-   * @param roundNumber - The round number to get tickets for
-   * @returns Promise that resolves to array of ticket IDs or undefined
+   * Get user's ticket count for a specific round
+   * @param roundNumber - The round number to get count for
+   * @returns Promise that resolves to ticket count or undefined
    */
-  const getUserTicketsForRound = async (roundNumber: bigint): Promise<bigint[] | undefined> => {
+  const getUserTicketCountForRound = async (roundNumber: bigint): Promise<bigint | undefined> => {
     try {
       const { data } = await useReadContract({
         ...tokenContractData,
-        functionName: "getUserTicketsForRound",
+        functionName: "getUserTicketCountForRound",
         args: [address || '0x0', roundNumber],
       });
 
-      return data as bigint[];
+      return data as bigint;
     } catch (error) {
-      console.error("Error getting user tickets for round:", error);
+      console.error("Error getting user ticket count for round:", error);
       return undefined;
     }
   };
@@ -334,7 +309,10 @@ export function useLotteryContract(
     roundInfo,
     currentRound,
     timeUntilEnd,
-    lastParticipationTimestamp,
+    userState: userState ? {
+      lastParticipation: userState[0],
+      participationCount: userState[1]
+    } : undefined,
     userTickets,
     userTicketCount,
     isPaused,
@@ -343,7 +321,7 @@ export function useLotteryContract(
     claimPrize,
     getRoundInfo,
     getTicketRound,
-    getUserTicketsForRound,
+    getUserTicketCountForRound,
     isEntering,
     hasEntered,
     refetchRoundInfo,
