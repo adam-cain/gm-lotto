@@ -140,11 +140,13 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...mint,
+    name: "Mint",
     iconUrl: "/chains/mint.png",
     iconBackground: "#30BF54",
   },
   {
     ...mode,
+    name: "Mode",
     iconUrl: "/chains/mode.png",
 
     iconBackground: "#D8FF00",
@@ -250,6 +252,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...soneium,
+    name: "Soneium",
     iconUrl: "/chains/soneium.jpeg",
     iconBackground: "#000000",
   },
@@ -260,7 +263,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...swan,
-
+    name: "Swan Chain",
     iconUrl: "/chains/swan.png",
   },
   {
