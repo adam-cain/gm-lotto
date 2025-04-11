@@ -2,7 +2,6 @@ import {
   useReadContract,
   useWriteContract,
   useSwitchChain,
-  useContractWrite,
   useTransaction,
   useAccount,
 } from "wagmi";
