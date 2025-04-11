@@ -18,8 +18,10 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime') {
       const endTimeMs = time * 1000; // Convert end time to milliseconds
       return endTimeMs - now;
     } else {
-      // For timeLeft mode, we just need to convert seconds to milliseconds
-      return time * 1000;
+      // For timeLeft mode, we need to track when we started counting down
+      const startTimeMs = time * 1000; // Convert time left to milliseconds
+      const elapsedMs = now - (useCountdown as any).startTime;
+      return Math.max(0, startTimeMs - elapsedMs);
     }
   };
 
@@ -46,23 +48,22 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime') {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    // Only set up interval if we're in endTime mode
-    if (mode === 'endTime') {
-      const timer = setInterval(() => {
-        const newTimeLeft = calculateTimeLeft();
-
-        if (newTimeLeft <= 0) {
-          clearInterval(timer); // Stop the timer when countdown is complete
-        }
-        setTimeLeft(newTimeLeft);
-      }, 1000);
-
-      // Clean up the timer interval when the component unmounts.
-      return () => clearInterval(timer);
-    } else {
-      // For timeLeft mode, just set the initial time
-      setTimeLeft(calculateTimeLeft());
+    // Initialize start time for timeLeft mode
+    if (mode === 'timeLeft' && !(useCountdown as any).startTime) {
+      (useCountdown as any).startTime = new Date().getTime();
     }
+
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+
+      if (newTimeLeft <= 0) {
+        clearInterval(timer); // Stop the timer when countdown is complete
+      }
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    // Clean up the timer interval when the component unmounts.
+    return () => clearInterval(timer);
   }, [time, mode]);
 
   // Return the formatted time string.
