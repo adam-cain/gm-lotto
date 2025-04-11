@@ -23,7 +23,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   // unix timestamp for 24 hours from now
   const endTime = Number(lastParticipationTimestamp) + 60 * 60 * 24
-  const time = useCountdown(endTime);
+  const time = useCountdown(endTime, "endTime");
 
   if (chain.id === 11155420) {
     console.log("time:", endTime, time);

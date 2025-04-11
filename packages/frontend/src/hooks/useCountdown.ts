@@ -1,19 +1,26 @@
 import { useState, useEffect } from 'react';
 
+type CountdownMode = 'endTime' | 'timeLeft';
+
 /**
  * useCountdown
  * A custom hook that returns a human readable countdown string.
  *
- * @param {number} endTimeUnix - The end time as a Unix timestamp in seconds.
+ * @param {number} time - The time value in Unix timestamp (seconds)
+ * @param {CountdownMode} mode - Whether the time parameter represents an end time or time left
  * @returns {string} A formatted string like "1d 3h 5m 10s" or null if the countdown is over.
  */
-function useCountdown(endTimeUnix: number) {
+function useCountdown(time: number, mode: CountdownMode = 'endTime') {
   // Helper function to calculate the remaining time (in milliseconds)
   const calculateTimeLeft = () => {
     const now = new Date().getTime(); // Current time in milliseconds
-    const endTimeMs = endTimeUnix * 1000; // Convert end time to milliseconds
-    const difference = endTimeMs - now;
-    return difference;
+    if (mode === 'endTime') {
+      const endTimeMs = time * 1000; // Convert end time to milliseconds
+      return endTimeMs - now;
+    } else {
+      // For timeLeft mode, we just need to convert seconds to milliseconds
+      return time * 1000;
+    }
   };
 
   // Helper function to format the milliseconds difference to a string.
@@ -39,19 +46,24 @@ function useCountdown(endTimeUnix: number) {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    // Set up an interval to update the countdown every second.
-    const timer = setInterval(() => {
-      const newTimeLeft = calculateTimeLeft();
+    // Only set up interval if we're in endTime mode
+    if (mode === 'endTime') {
+      const timer = setInterval(() => {
+        const newTimeLeft = calculateTimeLeft();
 
-      if (newTimeLeft <= 0) {
-        clearInterval(timer); // Stop the timer when countdown is complete
-      }
-      setTimeLeft(newTimeLeft);
-    }, 1000);
+        if (newTimeLeft <= 0) {
+          clearInterval(timer); // Stop the timer when countdown is complete
+        }
+        setTimeLeft(newTimeLeft);
+      }, 1000);
 
-    // Clean up the timer interval when the component unmounts.
-    return () => clearInterval(timer);
-  }, [endTimeUnix]);
+      // Clean up the timer interval when the component unmounts.
+      return () => clearInterval(timer);
+    } else {
+      // For timeLeft mode, just set the initial time
+      setTimeLeft(calculateTimeLeft());
+    }
+  }, [time, mode]);
 
   // Return the formatted time string.
   return formatTime(timeLeft);

@@ -1,3 +1,4 @@
+import useCountdown from '@/hooks/useCountdown';
 import { useLotteryContract } from '@/hooks/useLotteryContract';
 import { chains } from '@/lib/chains';
 import { useEffect, useState } from 'react';
@@ -36,22 +37,24 @@ export default function LotteryStatus() {
 		refetchRoundInfo,
 	} = useLotteryContract(chainId, contractAddress);
 
-	useEffect(() => {
-		if (!timeUntilEnd) return;
+	const time = useCountdown(Number(timeUntilEnd), 'timeLeft');
 
-		// Set initial countdown
-		setCountdown(Number(timeUntilEnd));
+	// useEffect(() => {
+	// 	if (!timeUntilEnd) return;
 
-		// Update countdown every second
-		const interval = setInterval(() => {
-			setCountdown(prev => {
-				if (prev === undefined || prev <= 0) return 0;
-				return prev - 1;
-			});
-		}, 1000);
+	// 	// Set initial countdown
+	// 	setCountdown(Number(timeUntilEnd));
 
-		return () => clearInterval(interval);
-	}, [timeUntilEnd]);
+	// 	// Update countdown every second
+	// 	const interval = setInterval(() => {
+	// 		setCountdown(prev => {
+	// 			if (prev === undefined || prev <= 0) return 0;
+	// 			return prev - 1;
+	// 		});
+	// 	}, 1000);
+
+	// 	return () => clearInterval(interval);
+	// }, [timeUntilEnd]);
 
 	return (
 		<div className="bg-white rounded-xl shadow-sm p-4">
@@ -74,7 +77,7 @@ export default function LotteryStatus() {
 					<div className="flex items-center justify-between">
 						<span className="text-sm text-gray-500">Time Remaining</span>
 						<span className="text-sm font-mono">
-							{formatTimeRemaining(countdown)}
+							{time}
 						</span>
 					</div>
 
