@@ -47,10 +47,15 @@ export function useLotteryContract(
   const { address } = useAccount();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
-  // Get current round info
-  const { data: rawRoundInfo, refetch: refetchRoundInfo } = useReadContract({
+  const contractData = {
     address: contractAddress,
     abi: LOTTERY_CONTRACT_ABI,
+    chainId: chainId,
+  }
+
+  // Get current round info
+  const { data: rawRoundInfo, refetch: refetchRoundInfo } = useReadContract({
+    ...contractData,
     functionName: "getCurrentRoundInfo",
   }) as { data: [bigint, bigint, bigint, bigint, boolean] | undefined; refetch: () => void };  
 
@@ -67,22 +72,19 @@ export function useLotteryContract(
 
   // Get current round number
   const { data: currentRound } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_CONTRACT_ABI,
+    ...contractData,
     functionName: "currentRound",
   });
 
   // Get time until round end
   const { data: timeUntilEnd } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_CONTRACT_ABI,
+    ...contractData,
     functionName: "timeUntilRoundEnd",
   });
 
   // Get last participation timestamp for current user
   const { data: lastParticipationTimestamp } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_CONTRACT_ABI,
+    ...contractData,
     functionName: "lastParticipationTimestamp",
     args: [address || '0x0'],
   });
@@ -95,8 +97,7 @@ export function useLotteryContract(
       });
 
       const result = await writeContract({
-        abi: LOTTERY_CONTRACT_ABI,
-        address: contractAddress,
+        ...contractData,
         functionName: "enterLottery",
       });
 
@@ -115,8 +116,7 @@ export function useLotteryContract(
       });
 
       const result = await writeContract({
-        abi: LOTTERY_CONTRACT_ABI,
-        address: contractAddress,
+        ...contractData,
         functionName: "setPrizeAmount",
         args: [roundNumber, amount],
         value: amount,
@@ -137,8 +137,7 @@ export function useLotteryContract(
       });
 
       const result = await writeContract({
-        abi: LOTTERY_CONTRACT_ABI,
-        address: contractAddress,
+        ...contractData,
         functionName: "claimPrize",
         args: [roundNumber],
       });
@@ -155,8 +154,7 @@ export function useLotteryContract(
   const getRoundInfo = async (roundNumber: bigint): Promise<FullRoundInfo | undefined> => {
     try {
       const { data } = await useReadContract({
-        address: contractAddress,
-        abi: LOTTERY_CONTRACT_ABI,
+        ...contractData,
         functionName: "getRoundInfo",
         args: [roundNumber],
       });
