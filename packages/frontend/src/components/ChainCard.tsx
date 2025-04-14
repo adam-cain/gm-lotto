@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { useLotteryContract } from '@/hooks/useLotteryContract';
-import { Chain } from '@/lib/chains';
+import { Chain, chainsById } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState } from 'react';
 import useCountdown from '@/hooks/useCountdown';
@@ -15,24 +15,19 @@ const ChainCard: React.FC<ChainCardProps> = ({
   chain,
   isConnected,
 }) => {
-  const { enterLottery, userState, refetchRoundInfo } = useLotteryContract(chain.id, chain.managerAddress || '0x0', chain.tokenAddress || '0x0');
+  const { enterLottery, lastParticipation, refetchRoundInfo } = useLotteryContract(chain.id);
   const { chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
   const account = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
-  // unix timestamp for 24 hours from now
-  const endTime = Number(userState?.lastParticipation) + 60 * 60 * 24
-  const time = useCountdown(endTime, "endTime");
+  const time = useCountdown(Number(lastParticipation) + 60 * 60 * 24, "endTime");
 
   const handleClick = async () => {
-    setIsLoading(true);
     if (isConnected) {
       enterLottery();
     } else {
       openConnectModal?.();
     }
     refetchRoundInfo();
-    setIsLoading(false);
   }
 
   const buttonTextColor = chain.iconBackground
@@ -77,6 +72,10 @@ const ChainCard: React.FC<ChainCardProps> = ({
   const ConnectionStatus = ({ isConnected, time }: { isConnected: boolean; time: string | null }) => {
     if (!isConnected) {
       return <StatusIndicator color="red" text="Not connected" />;
+    }
+
+    if(chainsById[chain.id].tokenAddress === undefined || chainsById[chain.id].managerAddress === undefined) {
+      return <StatusIndicator color="red" text="Missing Contract" />;
     }
 
     if (time) {
@@ -131,20 +130,15 @@ const ChainCard: React.FC<ChainCardProps> = ({
       <div className="px-4 pb-4">
         <button
           onClick={() => handleClick()}
-          disabled={isLoading
-            || 
-            isDisabled()
-          }
-          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors truncate ${isLoading || isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          disabled={isDisabled()}
+          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors truncate ${isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           style={{
             backgroundColor: chain.iconBackground ?? '#000',
             color: buttonTextColor
           }}
         >
-          {isLoading ? (
-            'Connecting...'
-          ) : isConnected ? (
+           {isConnected ? (
             chainId === chain.id ? `GM on ${chain.name}` : `Switch chain`
           ) : (
             'Connect Wallet'
