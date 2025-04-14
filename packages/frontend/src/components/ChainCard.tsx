@@ -15,13 +15,13 @@ const ChainCard: React.FC<ChainCardProps> = ({
   chain,
   isConnected,
 }) => {
-  const { enterLottery, lastParticipationTimestamp } = useLotteryContract(chain.id, chain.managerAddress || '0x0', chain.tokenAddress || '0x0');
+  const { enterLottery, userState, refetchRoundInfo } = useLotteryContract(chain.id, chain.managerAddress || '0x0', chain.tokenAddress || '0x0');
   const { chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
   const account = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   // unix timestamp for 24 hours from now
-  const endTime = Number(lastParticipationTimestamp) + 60 * 60 * 24
+  const endTime = Number(userState?.lastParticipation) + 60 * 60 * 24
   const time = useCountdown(endTime, "endTime");
 
   const handleClick = async () => {
@@ -31,6 +31,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
     } else {
       openConnectModal?.();
     }
+    refetchRoundInfo();
     setIsLoading(false);
   }
 
@@ -85,6 +86,12 @@ const ChainCard: React.FC<ChainCardProps> = ({
     return <StatusIndicator color="green" text="Ready" />;
   };
 
+  const isDisabled = () => {
+    return (
+      time !== null && chainId === chain.id
+    )
+  }
+
   // scale 1.025
 
   return (
@@ -125,9 +132,10 @@ const ChainCard: React.FC<ChainCardProps> = ({
         <button
           onClick={() => handleClick()}
           disabled={isLoading
-            || time !== null
+            || 
+            isDisabled()
           }
-          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors hover:cursor-pointer truncate ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors truncate ${isLoading || isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           style={{
             backgroundColor: chain.iconBackground ?? '#000',

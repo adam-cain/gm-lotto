@@ -2,6 +2,7 @@ import useCountdown from '@/hooks/useCountdown';
 import { useLotteryContract } from '@/hooks/useLotteryContract';
 import { chains } from '@/lib/chains';
 import { useEffect, useState } from 'react';
+import { useChainId } from 'wagmi';
 
 const formatTimeRemaining = (seconds: number | undefined): string => {
 	if (seconds === undefined) return 'Loading...';
@@ -19,14 +20,23 @@ const formatTimeRemaining = (seconds: number | undefined): string => {
 };
 
 export default function LotteryStatus() {
-	const chainId = chains[0].id;
-	const contractAddress = chains[0].managerAddress as `0x${string}`;
-	const tokenAddress = chains[0].tokenAddress as `0x${string}`;
+	const chainId = useChainId();
+	const chain = chains.find(c => c.id === chainId);
+	
+	const [contractAddress, setContractAddress] = useState<`0x${string}`>(chain?.managerAddress as `0x${string}`);
+	const [tokenAddress, setTokenAddress] = useState<`0x${string}`>(chain?.tokenAddress as `0x${string}`);
+
+	useEffect(() => {
+		const currentChain = chains.find(c => c.id === chainId);
+		setContractAddress(currentChain?.managerAddress as `0x${string}`);
+		setTokenAddress(currentChain?.tokenAddress as `0x${string}`);
+	}, [chainId]);
 
 	const {
 		roundInfo,
 		currentRound,
 		timeUntilEnd,
+		userState
 	} = useLotteryContract(chainId, contractAddress, tokenAddress);
 
 	const time = useCountdown(Number(timeUntilEnd), 'timeLeft', 3);
@@ -34,7 +44,7 @@ export default function LotteryStatus() {
 	return (
 		<div className="bg-white rounded-xl shadow-sm p-4">
 			<div className="flex items-center align-middle mb-2 gap-2">
-				<h3 className="text-lg font-semibold">Round #{currentRound}</h3>
+				<h3 className="text-lg font-semibold">{chain?.name} {currentRound ? "Round #" + currentRound : ""}</h3>
 			</div>
 
 			{roundInfo ? (
@@ -54,15 +64,16 @@ export default function LotteryStatus() {
 					</div>
 
 
-
-					{/* <hr className="my-2 border-gray-200" />
+					{userState && <>
+					<hr className="my-2 border-gray-200" />
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-gray-500">Your Stats</span>
+						<span className="text-sm text-gray-500">Your Tickets</span>
 						<span className="text-sm">
-							{roundInfo.isActive ? 'Active' : 'Closed'}
+							{userState.participationCount}
 						</span>
-					</div> */}
-					
+					</div>
+					</>}
+
 				</div>
 			) : (
 				<div className="text-sm text-gray-500">Loading lottery information...</div>
