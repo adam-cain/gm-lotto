@@ -1,4 +1,4 @@
-export const LOTTERY_CONTRACT_ABI = [
+export const LOTTERY_MANAGER_ABI = [
     {
         "type": "constructor",
         "inputs": [
@@ -87,8 +87,50 @@ export const LOTTERY_CONTRACT_ABI = [
             },
             {
                 "name": "pastRounds",
-                "type": "uint256[]",
-                "internalType": "uint256[]"
+                "type": "tuple[]",
+                "internalType": "struct GMLotteryManager.RoundWithNumber[]",
+                "components": [
+                    {
+                        "name": "roundNumber",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "startTime",
+                        "type": "uint64",
+                        "internalType": "uint64"
+                    },
+                    {
+                        "name": "endTime",
+                        "type": "uint64",
+                        "internalType": "uint64"
+                    },
+                    {
+                        "name": "isActive",
+                        "type": "bool",
+                        "internalType": "bool"
+                    },
+                    {
+                        "name": "winner",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "prizeAmount",
+                        "type": "uint96",
+                        "internalType": "uint96"
+                    },
+                    {
+                        "name": "prizeSet",
+                        "type": "bool",
+                        "internalType": "bool"
+                    },
+                    {
+                        "name": "prizeClaimed",
+                        "type": "bool",
+                        "internalType": "bool"
+                    }
+                ]
             }
         ],
         "stateMutability": "view"
@@ -161,6 +203,25 @@ export const LOTTERY_CONTRACT_ABI = [
                 "name": "",
                 "type": "bool",
                 "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "lastParticipation",
+        "inputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint64",
+                "internalType": "uint64"
             }
         ],
         "stateMutability": "view"
@@ -280,47 +341,10 @@ export const LOTTERY_CONTRACT_ABI = [
     },
     {
         "type": "function",
-        "name": "timeUntilRoundEnd",
-        "inputs": [],
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "stateMutability": "view"
-    },
-    {
-        "type": "function",
         "name": "unpause",
         "inputs": [],
         "outputs": [],
         "stateMutability": "nonpayable"
-    },
-    {
-        "type": "function",
-        "name": "userStates",
-        "inputs": [
-            {
-                "name": "",
-                "type": "address",
-                "internalType": "address"
-            }
-        ],
-        "outputs": [
-            {
-                "name": "lastParticipation",
-                "type": "uint64",
-                "internalType": "uint64"
-            },
-            {
-                "name": "participationCount",
-                "type": "uint32",
-                "internalType": "uint32"
-            }
-        ],
-        "stateMutability": "view"
     },
     {
         "type": "event",

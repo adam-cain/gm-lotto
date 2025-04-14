@@ -41,8 +41,8 @@ export const chains: readonly [Chain, ...Chain[]] = [
     ...optimismSepolia,
     name: "Optimism Sepolia",
     iconUrl: "/chains/optimism.svg",
-    managerAddress: "0xC0Fa89B7B310862814dA651880beA54127Ea2F52" as `0x${string}`,
-    tokenAddress: "0xc391108b1611547db746573d3Df8F14fB8e34C1c" as `0x${string}`,
+    managerAddress: "0xb1d25690D9412C6EeB72c8350bd03FC894487Af6" as `0x${string}`,
+    tokenAddress: "0xD128104542067D8bD7D57a8fAA2d2Eccd2705C8D" as `0x${string}`,
     status: "hot",
   },
   ...(process.env.NODE_ENV === 'development' ? [] : []),
@@ -326,3 +326,8 @@ export const chains: readonly [Chain, ...Chain[]] = [
     iconBackground: "#070730",
   },
 ] as const satisfies Chain[];
+
+// Create a map of chains by ID for direct access
+export const chainsById: Record<number, Chain> = Object.fromEntries(
+  chains.map((chain) => [chain.id, chain])
+) as Record<number, Chain>;

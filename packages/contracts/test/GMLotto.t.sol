@@ -21,6 +21,9 @@ contract GMLotteryTest is Test {
     event RoundEnded(uint256 roundNumber, address winner);
     event PrizeSet(uint256 roundNumber, uint256 amount);
     event PrizeClaimed(uint256 roundNumber, address winner, uint256 amount);
+    event ContractPaused();
+    event ContractUnpaused();
+    event EmergencyWithdrawal(address indexed operator, uint256 amount);
 
     function setUp() public {
         // Set initial timestamp
@@ -47,14 +50,13 @@ contract GMLotteryTest is Test {
             uint256 endTime,
             uint256 roundTicketCount,
             uint256 userRoundTicketCount,
-            uint256[] memory pastRounds
+            GMLotteryManager.RoundWithNumber[] memory pastRounds
         ) = lotteryManager.getCurrentRoundInfo();
         
         assertEq(roundNumber, 1);
         assertEq(roundTicketCount, 0);
         assertEq(userRoundTicketCount, 0);
-        assertEq(pastRounds.length, 1);
-        assertEq(pastRounds[0], 1);
+        assertEq(pastRounds.length, 0); // Initially no past rounds
         assertEq(endTime, INITIAL_TIMESTAMP + ROUND_DURATION);
         
         // Check NFT contract ownership
@@ -137,31 +139,8 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Check previous round winner
-        uint256 startTime;
-        uint256 endTime;
-        uint256 roundTicketCount;
-        uint256 userRoundTicketCount;
-        bool isActive;
-        address winner;
-        uint256 prizeAmount;
-        bool prizeSet;
-        bool prizeClaimed;
-        (
-            startTime,
-            endTime,
-            roundTicketCount,
-            userRoundTicketCount,
-            isActive,
-            winner,
-            prizeAmount,
-            prizeSet,
-            prizeClaimed
-        ) = lotteryManager.getRoundInfo(1);
+        (,,,,,address winner,,,) = lotteryManager.getRoundInfo(1);
         assertTrue(winner == user1 || winner == user2);
-
-        // Check prize is set
-        assertEq(prizeAmount, PRIZE_AMOUNT);
-        assertTrue(prizeSet);
     }
 
     function test_PrizeSettingAndClaiming() public {
@@ -190,26 +169,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Get winner info
-        uint256 startTime;
-        uint256 endTime;
-        uint256 roundTicketCount;
-        uint256 userRoundTicketCount;
-        bool isActive;
-        address winner;
-        uint256 prizeAmount;
-        bool prizeSet;
-        bool prizeClaimed;
-        (
-            startTime,
-            endTime,
-            roundTicketCount,
-            userRoundTicketCount,
-            isActive,
-            winner,
-            prizeAmount,
-            prizeSet,
-            prizeClaimed
-        ) = lotteryManager.getRoundInfo(1);
+        (,,,,,address winner,uint256 prizeAmount,bool prizeSet,) = lotteryManager.getRoundInfo(1);
 
         // Check prize is set
         assertEq(prizeAmount, PRIZE_AMOUNT);
@@ -320,26 +280,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Try to claim prize before it's set
-        uint256 startTime;
-        uint256 endTime;
-        uint256 roundTicketCount;
-        uint256 userRoundTicketCount;
-        bool isActive;
-        address winner;
-        uint256 prizeAmount;
-        bool prizeSet;
-        bool prizeClaimed;
-        (
-            startTime,
-            endTime,
-            roundTicketCount,
-            userRoundTicketCount,
-            isActive,
-            winner,
-            prizeAmount,
-            prizeSet,
-            prizeClaimed
-        ) = lotteryManager.getRoundInfo(1);
+        (,,,,,address winner,,,) = lotteryManager.getRoundInfo(1);
         vm.startPrank(winner);
         vm.expectRevert("Prize not set");
         lotteryManager.claimPrize(1);
@@ -366,8 +307,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Get winner
-        address winner;
-        (,,,,,winner,,,) = lotteryManager.getRoundInfo(1);
+        (,,,,,address winner,,,) = lotteryManager.getRoundInfo(1);
 
         // Claim prize first time
         vm.startPrank(winner);
@@ -377,26 +317,6 @@ contract GMLotteryTest is Test {
         vm.expectRevert("Prize already claimed");
         lotteryManager.claimPrize(1);
         vm.stopPrank();
-    }
-
-    function test_TimeUntilRoundEnd() public {
-        // Check initial time until round end
-        uint256 timeLeft = lotteryManager.timeUntilRoundEnd();
-        assertEq(timeLeft, ROUND_DURATION);
-
-        // Fast forward half a week
-        vm.warp(block.timestamp + ROUND_DURATION / 2);
-        
-        // Check time again
-        timeLeft = lotteryManager.timeUntilRoundEnd();
-        assertEq(timeLeft, ROUND_DURATION / 2);
-
-        // Fast forward past end
-        vm.warp(block.timestamp + ROUND_DURATION);
-        
-        // Check time is zero
-        timeLeft = lotteryManager.timeUntilRoundEnd();
-        assertEq(timeLeft, 0);
     }
 
     function test_GetTotalTicketCount() public {
@@ -424,10 +344,9 @@ contract GMLotteryTest is Test {
     }
 
     function test_GetPastRounds() public {
-        // Initially only round 1
-        (,,,,uint256[] memory pastRounds) = lotteryManager.getCurrentRoundInfo();
-        assertEq(pastRounds.length, 1);
-        assertEq(pastRounds[0], 1);
+        // Initially no past rounds
+        (,,,,GMLotteryManager.RoundWithNumber[] memory pastRounds) = lotteryManager.getCurrentRoundInfo();
+        assertEq(pastRounds.length, 0);
 
         // Fast forward to round 2
         vm.warp(block.timestamp + ROUND_DURATION);
@@ -437,9 +356,11 @@ contract GMLotteryTest is Test {
 
         // Check past rounds
         (,,,,pastRounds) = lotteryManager.getCurrentRoundInfo();
-        assertEq(pastRounds.length, 2);
-        assertEq(pastRounds[0], 1);
-        assertEq(pastRounds[1], 2);
+        assertEq(pastRounds.length, 1);
+        assertEq(pastRounds[0].roundNumber, 1);
+        assertEq(pastRounds[0].startTime, INITIAL_TIMESTAMP);
+        assertEq(pastRounds[0].endTime, INITIAL_TIMESTAMP + ROUND_DURATION);
+        assertFalse(pastRounds[0].isActive);
     }
 
     function test_CannotTransferTicket() public {
@@ -554,26 +475,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Verify round 1 has no winner
-        uint256 startTime;
-        uint256 endTime;
-        uint256 roundTicketCount;
-        uint256 userRoundTicketCount;
-        bool isActive;
-        address winner;
-        uint256 prizeAmount;
-        bool prizeSet;
-        bool prizeClaimed;
-        (
-            startTime,
-            endTime,
-            roundTicketCount,
-            userRoundTicketCount,
-            isActive,
-            winner,
-            prizeAmount,
-            prizeSet,
-            prizeClaimed
-        ) = lotteryManager.getRoundInfo(1);
+        (,,,,,address winner,,,) = lotteryManager.getRoundInfo(1);
         assertEq(winner, address(0));
     }
 
@@ -595,28 +497,6 @@ contract GMLotteryTest is Test {
         vm.startPrank(operator);
         lotteryManager.setPrizeAmount{value: PRIZE_AMOUNT}(1, PRIZE_AMOUNT);
         vm.stopPrank();
-
-        // Get winner
-        uint256 startTime;
-        uint256 endTime;
-        uint256 roundTicketCount;
-        uint256 userRoundTicketCount;
-        bool isActive;
-        address winner;
-        uint256 prizeAmount;
-        bool prizeSet;
-        bool prizeClaimed;
-        (
-            startTime,
-            endTime,
-            roundTicketCount,
-            userRoundTicketCount,
-            isActive,
-            winner,
-            prizeAmount,
-            prizeSet,
-            prizeClaimed
-        ) = lotteryManager.getRoundInfo(1);
 
         // Non-winner cannot claim prize
         vm.startPrank(user3);

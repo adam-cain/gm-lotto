@@ -6,11 +6,11 @@ import {
   useAccount,
 } from "wagmi";
 import {
-  LOTTERY_CONTRACT_ABI,
+  LOTTERY_MANAGER_ABI,
   LOTTERY_TOKEN_ABI,
 } from "../config/contracts";
-import { formatEther } from "viem";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { chainsById } from "@/lib/chains";
 
 /**
  * Interface representing basic round information
@@ -18,14 +18,23 @@ import { useState } from "react";
  * @property endTime - Unix timestamp when the round ends
  * @property ticketCount - Number of tickets in the current round
  * @property userTicketCount - Number of tickets owned by the user
- * @property pastRounds - Array of past round numbers
+ * @property pastRounds - Array of past round information
  */
 export interface RoundInfo {
-  roundNumber: bigint;
-  endTime: bigint;
-  ticketCount: bigint;
-  userTicketCount: bigint;
-  pastRounds: bigint[];
+  roundNumber: number;
+  endTime: number;
+  ticketCount: number;
+  userTicketCount: number;
+  pastRounds: readonly {
+    roundNumber: number;
+    startTime: number;
+    endTime: number;
+    isActive: boolean;
+    winner: `0x${string}`;
+    prizeAmount: number;
+    prizeSet: boolean;
+    prizeClaimed: boolean;
+  }[];
 }
 
 /**
@@ -40,7 +49,7 @@ export interface RoundInfo {
  * @property prizeSet - Whether the prize has been set
  * @property prizeClaimed - Whether the prize has been claimed
  */
-export interface FullRoundInfo {
+interface FullRoundInfo {
   startTime: bigint;
   endTime: bigint;
   roundTicketCount: bigint;
@@ -53,36 +62,25 @@ export interface FullRoundInfo {
 }
 
 /**
- * Interface representing user state
- * @property lastParticipation - Last participation timestamp
- * @property participationCount - Number of participations
- */
-export interface UserState {
-  lastParticipation: bigint;
-  participationCount: bigint;
-}
-
-/**
  * Custom hook for interacting with the GM Lottery contract
  * @param chainId - The chain ID where the contract is deployed
- * @param contractAddress - The address of the GMLotteryManager contract
- * @param tokenAddress - The address of the GMLotteryToken contract
  * @returns Object containing contract interaction methods and state
  */
 export function useLotteryContract(
   chainId: number,
-  contractAddress: `0x${string}`,
-  tokenAddress: `0x${string}`
 ) {
   const { switchChain } = useSwitchChain();
   const { writeContract } = useWriteContract();
   const { address } = useAccount();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
+  const contractAddress = chainsById[chainId]?.managerAddress as `0x${string}`;
+  const tokenAddress = chainsById[chainId]?.tokenAddress as `0x${string}`;
+
   // Contract configuration for lottery manager
   const contractData = {
     address: contractAddress,
-    abi: LOTTERY_CONTRACT_ABI,
+    abi: LOTTERY_MANAGER_ABI,
     chainId: chainId,
   }
 
@@ -94,38 +92,33 @@ export function useLotteryContract(
   }
 
   // Get current round information
-  const { data: rawRoundInfo, refetch: refetchRoundInfo } = useReadContract({
+  const { data: roundInfoData, refetch: refetchRoundInfo } = useReadContract({
     ...contractData,
     functionName: "getCurrentRoundInfo",
-  }) as { data: [bigint, bigint, bigint, bigint, bigint[]] | undefined; refetch: () => void };  
+  }) as { data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, refetch: () => void };  
 
-  // Format round information
-  const roundInfo: RoundInfo | undefined = rawRoundInfo ? {
-    roundNumber: rawRoundInfo[0],
-    endTime: rawRoundInfo[1],
-    ticketCount: rawRoundInfo[2],
-    userTicketCount: rawRoundInfo[3],
-    pastRounds: rawRoundInfo[4]
-  } : undefined;
+  const roundInfo: RoundInfo | null = roundInfoData ? {
+    roundNumber: Number(roundInfoData?.[0]),
+    endTime: Number(roundInfoData?.[1]),
+    ticketCount: Number(roundInfoData?.[2]),
+    userTicketCount: Number(roundInfoData?.[3]),
+    pastRounds: roundInfoData?.[4].map((round) => ({
+      roundNumber: Number(round[0]),
+      startTime: Number(round[1]),
+      endTime: Number(round[2]),
+      isActive: round[3],
+      winner: round[4],
+      prizeAmount: Number(round[5]),
+      prizeSet: round[6],
+      prizeClaimed: round[7],
+    })),
+  } : null;
 
   // Get current round number
   const { data: currentRound } = useReadContract({
     ...contractData,
     functionName: "currentRound",
   });
-
-  // Get time remaining until round end
-  const { data: timeUntilEnd } = useReadContract({
-    ...contractData,
-    functionName: "timeUntilRoundEnd",
-  });
-
-  // Get user's state
-  const { data: userState } = useReadContract({
-    ...contractData,
-    functionName: "userStates",
-    args: [address || '0x0'],
-  }) as { data: [bigint, bigint] | undefined };
 
   // Get user's ticket IDs
   const { data: userTickets } = useReadContract({
@@ -145,6 +138,13 @@ export function useLotteryContract(
   const { data: isPaused } = useReadContract({
     ...contractData,
     functionName: "isPaused",
+  });
+
+  // Get user's last participation time
+  const { data: lastParticipation } = useReadContract({
+    ...contractData,
+    functionName: "lastParticipation",
+    args: [address || '0x0'],
   });
 
   /**
@@ -308,14 +308,10 @@ export function useLotteryContract(
   return {
     roundInfo,
     currentRound,
-    timeUntilEnd,
-    userState: userState ? {
-      lastParticipation: userState[0],
-      participationCount: userState[1]
-    } : undefined,
     userTickets,
     userTicketCount,
     isPaused,
+    lastParticipation,
     enterLottery,
     setPrizeAmount,
     claimPrize,

@@ -26,22 +26,35 @@ contract GMLotteryManager {
         bool prizeClaimed;   // Whether prize is claimed
     }
 
+    // Extended round struct for getCurrentRoundInfo
+    struct RoundWithNumber {
+        uint256 roundNumber;
+        uint64 startTime;
+        uint64 endTime;
+        bool isActive;
+        address winner;
+        uint96 prizeAmount;
+        bool prizeSet;
+        bool prizeClaimed;
+    }
+
     // Current round number and rounds mapping
     uint256 public currentRound;
     mapping(uint256 => Round) public rounds;
     
     // User's last participation timestamp
-    struct UserState {
-        uint64 lastParticipation;  // Last participation timestamp
-        uint32 participationCount; // Number of participations
-    }
-    mapping(address => UserState) public userStates;
+    mapping(address => uint64) public lastParticipation;
     
     // Contract state
     bool public isPaused;
     
-    // Events
+    // Events:
+    // Should be watched by the frontend to update the UI, for when a user 
+    // enters the lottery, increasing the count of tickets for the round.
+
     event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
+
+    // Possibly delete these
     event RoundStarted(uint256 roundNumber, uint256 startTime);
     event RoundEnded(uint256 roundNumber, address winner);
     event PrizeSet(uint256 roundNumber, uint256 amount);
@@ -75,10 +88,10 @@ contract GMLotteryManager {
      * @notice If the current round has ended, a new round will be started
      */
     function enterLottery() external whenNotPaused {
-        UserState storage userState = userStates[msg.sender];
+        uint64 userLastParticipation = lastParticipation[msg.sender];
         
         // Check if user has participated in the last 24 hours
-        if (block.timestamp < userState.lastParticipation + 1 days) {
+        if (block.timestamp < userLastParticipation + 1 days) {
             revert("Must wait 24 hours between entries");
         }
         
@@ -93,8 +106,7 @@ contract GMLotteryManager {
         }
         
         // Update user state
-        userState.lastParticipation = uint64(block.timestamp);
-        userState.participationCount += 1;
+        lastParticipation[msg.sender] = uint64(block.timestamp);
         
         // Mint NFT ticket
         uint256 ticketId = ticketNFT.mint(msg.sender, currentRound);
@@ -185,29 +197,41 @@ contract GMLotteryManager {
     }
     
     // View functions
-    function getPastRounds() private view returns (uint256[] memory) {
-        uint256 roundCount = currentRound;
-        uint256[] memory pastRounds = new uint256[](roundCount);
-        for (uint256 i = 1; i <= roundCount; i++) {
-            pastRounds[i - 1] = i;
-        }
-        return pastRounds;
-    }
+
+    // Round function
+
+    
 
     function getCurrentRoundInfo() external view returns (
         uint256 roundNumber,
         uint256 endTime,
         uint256 roundTicketCount,
         uint256 userRoundTicketCount,
-        uint256[] memory pastRounds
+        RoundWithNumber[] memory pastRounds
     ) {
+        uint256 roundCount = currentRound - 1; // Exclude current round
+        RoundWithNumber[] memory previousRounds = new RoundWithNumber[](roundCount);
+        for (uint256 i = 1; i <= roundCount; i++) {
+            Round storage roundData = rounds[i];
+            previousRounds[i - 1] = RoundWithNumber({
+                roundNumber: i,
+                startTime: roundData.startTime,
+                endTime: roundData.endTime,
+                isActive: roundData.isActive,
+                winner: roundData.winner,
+                prizeAmount: roundData.prizeAmount,
+                prizeSet: roundData.prizeSet,
+                prizeClaimed: roundData.prizeClaimed
+            });
+        }
+
         Round storage round = rounds[currentRound];
         return (
             currentRound,
             round.endTime,
             ticketNFT.getRoundTicketCount(currentRound),
             ticketNFT.getUserTicketCountForRound(msg.sender, currentRound),
-            getPastRounds()
+            previousRounds
         );
     }
     
@@ -235,12 +259,8 @@ contract GMLotteryManager {
             round.prizeClaimed
         );
     }
-    
-    function timeUntilRoundEnd() external view returns (uint256) {
-        Round storage round = rounds[currentRound];
-        if (block.timestamp >= round.endTime) return 0;
-        return round.endTime - block.timestamp;
-    }
+
+    // EMERGENCY FUNCTIONS
 
     /**
      * @dev Pauses the contract in case of emergency
