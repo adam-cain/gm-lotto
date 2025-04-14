@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cd packages/contracts && forge test",
+    "test": "cd packages/contracts && forge test -vvv",
     "dev": "cd packages/frontend && npm run dev",
     "build:frontend": "cd packages/frontend && npm run build",
     "build:contract": "cd packages/contracts && forge build",
