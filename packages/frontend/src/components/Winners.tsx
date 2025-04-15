@@ -75,7 +75,7 @@ const Winners: React.FC = () => {
   return (
     <Card>
       <div className="flex items-center mb-4 gap-2">
-        <h3 className="text-lg font-bold text-gray-900">Recent Winners</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Recent Winners</h3>
       </div>
 
       <div className="space-y-4">

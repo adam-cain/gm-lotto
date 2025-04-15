@@ -9,7 +9,7 @@ const ChainGrid: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center gap-2 mb-6">
+      <div className="flex justify-between items-center gap-6 mb-6">
         <div className="flex space-x-2 bg-gray-50 rounded-xl p-1 w-fit border border-gray-100">
           <button
             onClick={() => setActiveTab('all')}
