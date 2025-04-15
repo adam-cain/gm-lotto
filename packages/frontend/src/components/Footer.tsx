@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12">
-                  <GMLotto className="w-full h-full object-contain relative z-10 invert" />
+                  <GMLotto className="w-full h-full object-contain relative z-10 text-white"/>
                 </div>
                 <h1 className="text-3xl font-bold gradient-text transition-colors duration-300">
                   GM Lotto

@@ -1,4 +1,4 @@
-import { getDefaultConfig, Chain } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { chains } from "./chains";
 import { http } from "wagmi";
 

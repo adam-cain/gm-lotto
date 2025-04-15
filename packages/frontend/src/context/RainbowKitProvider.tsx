@@ -1,5 +1,5 @@
 import '@rainbow-me/rainbowkit/styles.css';
-import { RainbowKitProvider as RKProvider, darkTheme, midnightTheme, lightTheme, cssObjectFromTheme } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider as RKProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import {
     QueryClientProvider,

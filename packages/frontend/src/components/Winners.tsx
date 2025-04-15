@@ -81,7 +81,7 @@ const Winners: React.FC = () => {
       <div className="space-y-4">
         {isWinner.length > 0 && (
           <div className="text-sm bg-green-50 p-3 rounded-lg border border-green-100">
-            <h3 className="text-base font-bold text-green-600 mb-2">You've won!</h3>
+            <h3 className="text-base font-bold text-green-600 mb-2">You&apos;ve won!</h3>
             {isWinner.map((winner, index) => (
               <div key={index}>
                 {index > 0 && <hr className="border-red-100 my-2" />}

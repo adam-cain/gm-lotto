@@ -235,17 +235,17 @@ export function useLotteryContract(
    * @param roundNumber - The round number to get info for
    * @returns Promise that resolves to FullRoundInfo or undefined
    */
-  const getRoundInfo = async (roundNumber: bigint): Promise<FullRoundInfo | undefined> => {
-    try {
-      const { data } = await useReadContract({
-        ...contractData,
-        functionName: "getRoundInfo",
-        args: [roundNumber],
-      }) as { data: [bigint, bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean] | undefined };
+  const useRoundInfo = (roundNumber: bigint): { data: FullRoundInfo | undefined } => {
+    const { data } = useReadContract({
+      ...contractData,
+      functionName: "getRoundInfo",
+      args: [roundNumber],
+    }) as { data: [bigint, bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean] | undefined };
 
-      if (!data) return undefined;
+    if (!data) return { data: undefined };
 
-      return {
+    return {
+      data: {
         startTime: data[0],
         endTime: data[1],
         roundTicketCount: data[2],
@@ -255,53 +255,36 @@ export function useLotteryContract(
         prizeAmount: data[6],
         prizeSet: data[7],
         prizeClaimed: data[8]
-      };
-    } catch (error) {
-      console.error("Error getting round info:", error);
-      return undefined;
-    }
+      }
+    };
   };
 
   /**
    * Get the round number for a specific ticket
    * @param tokenId - The ticket ID to check
-   * @returns Promise that resolves to round number or undefined
+   * @returns The round number or undefined
    */
-  const getTicketRound = async (tokenId: bigint): Promise<bigint | undefined> => {
-    try {
-      const { data } = await useReadContract({
-        ...tokenContractData,
-        functionName: "getTicketRound",
-        args: [tokenId],
-      });
-
-      return data as bigint;
-    } catch (error) {
-      console.error("Error getting ticket round:", error);
-      return undefined;
-    }
+  const useTicketRound = (tokenId: bigint) => {
+    return useReadContract({
+      ...tokenContractData,
+      functionName: "getTicketRound",
+      args: [tokenId],
+    });
   };
 
   /**
    * Get user's ticket count for a specific round
    * @param roundNumber - The round number to get count for
-   * @returns Promise that resolves to ticket count or undefined
+   * @returns The ticket count or undefined
    */
-  const getUserTicketCountForRound = async (roundNumber: bigint): Promise<bigint | undefined> => {
-    try {
-      const { data } = await useReadContract({
-        ...tokenContractData,
-        functionName: "getUserTicketCountForRound",
-        args: [address || '0x0', roundNumber],
-      });
-
-      return data as bigint;
-    } catch (error) {
-      console.error("Error getting user ticket count for round:", error);
-      return undefined;
-    }
+  const useUserTicketCountForRound = (roundNumber: bigint) => {
+    return useReadContract({
+      ...tokenContractData,
+      functionName: "getUserTicketCountForRound",
+      args: [address || '0x0', roundNumber],
+    });
   };
-
+  
   // Track transaction status
   const { isLoading: isEntering, isSuccess: hasEntered } = useTransaction({
     hash: txHash,
@@ -317,11 +300,12 @@ export function useLotteryContract(
     enterLottery,
     setPrizeAmount,
     claimPrize,
-    getRoundInfo,
-    getTicketRound,
-    getUserTicketCountForRound,
+    useRoundInfo,
+    useTicketRound,
+    useUserTicketCountForRound,
     isEntering,
     hasEntered,
     refetchRoundInfo,
   };
 }
+

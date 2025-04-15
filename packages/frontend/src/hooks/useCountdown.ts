@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 type CountdownMode = 'endTime' | 'timeLeft';
 
@@ -12,8 +12,11 @@ type CountdownMode = 'endTime' | 'timeLeft';
  * @returns {string} A formatted string like "1d 3h 5m 10s" or null if the countdown is over.
  */
 function useCountdown(time: number, mode: CountdownMode = 'endTime', depth: number = 4) {
+  // Create a ref to track the start time for timeLeft mode
+  const startTimeRef = useRef<number | null>(null);
+  
   // Helper function to calculate the remaining time (in milliseconds)
-  const calculateTimeLeft = () => {
+  const calculateTimeLeft = useCallback(() => {
     const now = new Date().getTime(); // Current time in milliseconds
     if (mode === 'endTime') {
       const endTimeMs = time * 1000; // Convert end time to milliseconds
@@ -21,10 +24,13 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime', depth: numb
     } else {
       // For timeLeft mode, we need to track when we started counting down
       const startTimeMs = time * 1000; // Convert time left to milliseconds
-      const elapsedMs = now - (useCountdown as any).startTime;
+      if (startTimeRef.current === null) {
+        startTimeRef.current = now;
+      }
+      const elapsedMs = now - startTimeRef.current;
       return Math.max(0, startTimeMs - elapsedMs);
     }
-  };
+  }, [mode, time]);
 
   // Helper function to format the milliseconds difference to a string.
   const formatTime = (ms: number) => {
@@ -77,12 +83,12 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime', depth: numb
   };
 
   // Set the initial state with the time left.
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [timeLeft, setTimeLeft] = useState<number>(calculateTimeLeft());
 
   useEffect(() => {
     // Initialize start time for timeLeft mode
-    if (mode === 'timeLeft' && !(useCountdown as any).startTime) {
-      (useCountdown as any).startTime = new Date().getTime();
+    if (mode === 'timeLeft' && startTimeRef.current === null) {
+      startTimeRef.current = new Date().getTime();
     }
 
     const timer = setInterval(() => {
@@ -96,7 +102,7 @@ function useCountdown(time: number, mode: CountdownMode = 'endTime', depth: numb
 
     // Clean up the timer interval when the component unmounts.
     return () => clearInterval(timer);
-  }, [time, mode]);
+  }, [time, mode, calculateTimeLeft]);
 
   // Return the formatted time string.
   return formatTime(timeLeft);

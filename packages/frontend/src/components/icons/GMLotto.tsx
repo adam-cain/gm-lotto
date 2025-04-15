@@ -22,6 +22,7 @@ export default function GMLotto({
             height={height} 
             viewBox="505,124.5,700,700"
             className={className}
+            fill={fill}
         >
             <g 
                 fill={"currentColor"} 

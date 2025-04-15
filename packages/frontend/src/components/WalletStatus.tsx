@@ -1,4 +1,4 @@
-import { useAccount, useBalance, useDisconnect, useChainId, useEnsName } from 'wagmi';
+import { useAccount, useBalance, useChainId, useEnsName } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { formatAddress } from '@/utils/address';
 import { chains } from '@/lib/chains';
@@ -7,7 +7,6 @@ import Card from './Card';
 const WalletStatus = () => {
   const { address, isConnected } = useAccount();
   const { data: balance } = useBalance({ address });
-  const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { data: ensName } = useEnsName({ address });
 

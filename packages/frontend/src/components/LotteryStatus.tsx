@@ -1,6 +1,6 @@
 import useCountdown from '@/hooks/useCountdown';
 import { useLotteryContract } from '@/hooks/useLotteryContract';
-import { chains, chainsById } from '@/lib/chains';
+import { chainsById } from '@/lib/chains';
 import { useChainId, useAccount } from 'wagmi';
 
 

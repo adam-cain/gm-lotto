@@ -1,6 +1,7 @@
 import type React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import GMLotto from './icons/GMLotto';
+import Link from 'next/link';
 
 const Navbar: React.FC = () => {
   return (
@@ -9,9 +10,9 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <a className="flex items-center gap-3" href="/">
+          <Link className="flex items-center gap-3" href="/">
             <div className="relative w-12 h-12 flex-shrink-0">
-              <GMLotto width={300} height={300} className="w-full h-full object-contain relative z-10"/>
+              <GMLotto width={300} height={300} className="w-full h-full object-contain relative z-10 text-black"/>
             </div>
             <div className="flex flex-col">
               <h1 className="text-2xl font-bold font-heading gradient-text">
@@ -21,7 +22,7 @@ const Navbar: React.FC = () => {
                 Say GM to the Superchain
               </span>
             </div>
-          </a>
+          </Link>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
