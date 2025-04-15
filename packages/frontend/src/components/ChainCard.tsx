@@ -91,10 +91,10 @@ const ChainCard: React.FC<ChainCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101">
-      <div className="p-4">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101">
+      <div className="p-4 border-x border-t border-gray-100 rounded-t-xl ">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
+          <div className="w-10 h-10 rounded-full overflow-hidden  flex-shrink-0 border border-gray-100">
             {chain.iconUrl ? (
               <Image
                 width={40}
