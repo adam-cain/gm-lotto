@@ -12,7 +12,7 @@ export default function Home() {
         <div className="mb-8 lg:mb-16 relative overflow-hidden rounded-4xl aspect-video">
           <Image 
             src="/hero.png" 
-            alt="Say GM to the Blockchain" 
+            alt="Say GM to the Superchain" 
             fill
             priority
             className="object-cover"

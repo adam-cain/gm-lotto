@@ -28,11 +28,11 @@ const Footer: React.FC = () => {
                   <GMLotto className="w-full h-full object-contain relative z-10 invert" />
                 </div>
                 <h1 className="text-3xl font-bold gradient-text transition-colors duration-300">
-                  GM LOTTO
+                  GM Lotto
                 </h1>
               </div>
               <p className="text-gray-100">
-                GM LOTTO is the premier platform for saying GM to the blockchain. Every good morning you send earns a chance at on-chain rewards. Join thousands of users in this daily Web3 ritual.
+                GM Lotto is the premier platform for saying GM to the Superchain. Every good morning you send earns a chance at on-chain rewards. Join thousands of users in this daily Web3 ritual.
               </p>
             </div>
 
@@ -52,9 +52,9 @@ const Footer: React.FC = () => {
               </div>
             </div>
 
-            {/* Why GM LOTTO? */}
+            {/* Why GM Lotto? */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Why GM LOTTO?</h3>
+              <h3 className="text-xl font-semibold text-white">Why GM Lotto?</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-400">
@@ -97,7 +97,7 @@ const Footer: React.FC = () => {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-100">
                     <path d="M9.87999 7.71001L14.16 11.99L9.87999 16.27" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span>Why GM LOTTO</span>
+                  <span>Why GM Lotto</span>
                 </Link>
                 <Link className="flex items-center gap-2 text-gray-100 hover:text-gray-300 transition-colors" href="/community-guidelines">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-100">

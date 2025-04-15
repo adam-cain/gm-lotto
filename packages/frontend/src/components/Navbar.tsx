@@ -15,10 +15,10 @@ const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <h1 className="text-2xl font-bold font-heading gradient-text">
-                GM LOTTO
+                GM Lotto
               </h1>
               <span className="text-xs font-medium text-gray-500 tracking-wider">
-                Say GM to the Blockchain
+                Say GM to the Superchain
               </span>
             </div>
           </a>
