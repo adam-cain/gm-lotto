@@ -1,27 +1,22 @@
 import type React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import GMLotto from './icons/GMLotto';
-interface NavbarProps {
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
-}
 
-const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
+const Navbar: React.FC = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95  backdrop-blur-sm border-b border-gray-200  shadow-lg">
-      <div className="container mx-auto px-4 py-4">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b border-gray-100">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <a className="flex items-center md:gap-2" href="/">
-            <div className="relative w-14 h-14 md:w-[64px] md:h-[64px] group overflow-visible flex-shrink-0">
-              <div className="absolute -inset-1 rounded-[24px] blur-md opacity-50" />
-              <GMLotto width={300} height={300} className="w-full h-full object-contain relative z-10  fill-[#000000]" />
+          <a className="flex items-center gap-3" href="/">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <GMLotto width={300} height={300} className="w-full h-full object-contain relative z-10"/>
             </div>
-            <div className="hidden md:flex flex-col">
-              <h1 className="text-3xl font-black font-heading gradient-text hover:opacity-80 transition-all duration-500">
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold font-heading gradient-text">
                 GM LOTTO
               </h1>
-              <span className="text-sm font-medium text-gray-500 tracking-wider mt-0.5">
+              <span className="text-xs font-medium text-gray-500 tracking-wider">
                 Say GM to the Blockchain
               </span>
             </div>

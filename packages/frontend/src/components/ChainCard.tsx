@@ -3,7 +3,6 @@ import { useAccount } from 'wagmi';
 import { useLotteryContract } from '@/hooks/useLotteryContract';
 import { Chain, chainsById } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { useState } from 'react';
 import useCountdown from '@/hooks/useCountdown';
 
 interface ChainCardProps {
@@ -63,8 +62,8 @@ const ChainCard: React.FC<ChainCardProps> = ({
   };
 
   const StatusIndicator = ({ color, text }: { color: string; text: string }) => (
-    <div className="flex items-center allign-middle gap-2">
-      <div className={`w-2 h-2 rounded-full bg-${color}-500`} />
+    <div className="flex items-center gap-2">
+      <div className={`w-2 h-2 rounded-full ${color === 'green' ? 'bg-green-500' : 'bg-red-500'}`} />
       <p className="text-xs text-gray-500">{text}</p>
     </div>
   );
@@ -91,13 +90,11 @@ const ChainCard: React.FC<ChainCardProps> = ({
     )
   }
 
-  // scale 1.025
-
   return (
-    <div className="bg-white  rounded-xl shadow-sm overflow-hidden hover:scale-[102.5%] transition-all duration-200">
+    <div className="bg-white rounded-xl shadow-md border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101">
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100  flex-shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
             {chain.iconUrl ? (
               <Image
                 width={40}
@@ -112,13 +109,13 @@ const ChainCard: React.FC<ChainCardProps> = ({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <div className="w-4 h-4 bg-gray-200  rounded-full" />
+                <div className="w-4 h-4 bg-gray-200 rounded-full" />
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-gray-900  truncate">
+              <h3 className="font-medium text-gray-900 truncate">
                 {chain.name}
               </h3>
               {statusBadge[chain.status as keyof typeof statusBadge]}
@@ -127,18 +124,18 @@ const ChainCard: React.FC<ChainCardProps> = ({
           </div>
         </div>
       </div>
-      <div className="px-4 pb-4">
+      <div className="">
         <button
           onClick={() => handleClick()}
           disabled={isDisabled()}
-          className={`w-full py-2 px-4 text-sm font-medium rounded-lg transition-colors truncate ${isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          className={`w-full py-2 px-4 text-sm font-medium transition-colors truncate ${isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           style={{
             backgroundColor: chain.iconBackground ?? '#000',
             color: buttonTextColor
           }}
         >
-           {isConnected ? (
+          {isConnected ? (
             chainId === chain.id ? `GM on ${chain.name}` : `Switch chain`
           ) : (
             'Connect Wallet'
@@ -150,3 +147,4 @@ const ChainCard: React.FC<ChainCardProps> = ({
 };
 
 export default ChainCard;
+

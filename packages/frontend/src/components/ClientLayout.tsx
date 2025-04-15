@@ -11,29 +11,17 @@ export default function ClientLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
-
-    const toggleTheme = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
-        document.documentElement.classList.toggle('dark');
-    };
-
     return (
-        <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
-            <div className="min-h-screen bg-gray-100  text-gray-900  pt-40">
-                <RainbowKitProvider>
-                    <ChainProvider>
-                        <Navbar
-                            theme={theme}
-                            toggleTheme={toggleTheme}
-                        />
-                        <main className="container mx-auto px-4 pb-16">
-                            {children}
-                        </main>
-                    </ChainProvider>
-                    <Footer />
-                </RainbowKitProvider>
-            </div>
+        <div className="min-h-screen bg-white text-gray-900 pt-28">
+            <RainbowKitProvider>
+                <ChainProvider>
+                    <Navbar />
+                    <main className="container mx-auto px-4 pb-16">
+                        {children}
+                    </main>
+                </ChainProvider>
+                <Footer />
+            </RainbowKitProvider>
         </div>
     );
 } 

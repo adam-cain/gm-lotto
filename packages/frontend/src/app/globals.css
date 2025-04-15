@@ -1,9 +1,5 @@
 @import "tailwindcss";
 
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-
 /* Fonts Import */
 @layer base {
   :root {
@@ -11,35 +7,36 @@
   }
 
   body {
-    @apply bg-gray-100 
-     text-gray-900  min-h-screen;
-    font-family: 'Inter', sans-serif;
+    @apply bg-white text-gray-900;
+    font-family: var(--font-inter), system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+    @apply font-bold tracking-tight;
+  }
+
+  p, span, a, li, button, input, textarea {
+    font-family: var(--font-roboto), system-ui, sans-serif;
   }
 
   code, pre {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  --primary: #e02d3a;
+  --primary-dark: #b0232d;
+  --primary-light: #f27c86;
+  --secondary: #f5f5f5;
+  --text-primary: #212121;
+  --text-secondary: #555555;
+  --background: #ffffff;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
   --accent: 240 4.8% 95.9%;
@@ -86,14 +83,22 @@ body {
 
 @layer components {
   .gradient-text {
-    @apply bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent;
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-500;
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-r from-red-400/5 to-red-500/5;
+    @apply bg-gradient-to-r from-red-600 to-red-500;
+  }
+
+  .primary-button {
+    @apply px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm;
+  }
+
+  .secondary-button {
+    @apply px-4 py-2.5 border border-red-200 bg-white hover:bg-red-50 text-red-600 font-medium rounded-xl transition-colors shadow-sm;
   }
 
   .card {
-    @apply bg-white  rounded-xl shadow-sm hover:shadow-md transition-all;
+    @apply bg-white border border-gray-100 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow;
   }
 }

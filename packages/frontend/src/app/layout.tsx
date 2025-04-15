@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, Roboto, Montserrat } from "next/font/google";
 import "./globals.css";
 import ClientLayout from '@/components/ClientLayout';
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
+  variable: '--font-inter',
 });
 
-const spaceGrotesk = Space_Grotesk({
+const roboto = Roboto({
   subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
   display: 'swap',
+  variable: '--font-roboto',
 });
 
-const jetBrainsMono = JetBrains_Mono({
+const montserrat = Montserrat({
   subsets: ['latin'],
   display: 'swap',
+  variable: '--font-montserrat',
 });
 
 export const metadata: Metadata = {
@@ -34,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.className} ${spaceGrotesk.className} ${jetBrainsMono.className} antialiased`}
+        className={`${inter.variable} ${roboto.variable} ${montserrat.variable} font-sans antialiased`}
       >
           <ClientLayout>{children}</ClientLayout>
       </body>
