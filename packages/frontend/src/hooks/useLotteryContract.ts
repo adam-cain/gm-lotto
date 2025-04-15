@@ -9,8 +9,9 @@ import {
   LOTTERY_MANAGER_ABI,
   LOTTERY_TOKEN_ABI,
 } from "../config/contracts";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { chainsById } from "@/lib/chains";
+import { useRouter } from "next/navigation";
 
 /**
  * Interface representing basic round information
@@ -73,6 +74,7 @@ export function useLotteryContract(
   const { writeContract } = useWriteContract();
   const { address } = useAccount();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const router = useRouter();
 
   const contractAddress = chainsById[chainId]?.managerAddress as `0x${string}`;
   const tokenAddress = chainsById[chainId]?.tokenAddress as `0x${string}`;
@@ -166,7 +168,7 @@ export function useLotteryContract(
       });
       
       setTxHash(result as unknown as `0x${string}`);
-      refetchRoundInfo();
+      router.refresh();
       return true;
     } catch (error) {
       console.error("Error entering lottery:", error);
