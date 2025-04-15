@@ -4,7 +4,8 @@ import GMLotto from './icons/GMLotto';
 
 const Navbar: React.FC = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b border-gray-100">
+    //  shadow-lg/5 border-b border-gray-100
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg/5 border-b border-gray-100">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
