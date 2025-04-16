@@ -13,31 +13,28 @@ const ChainGrid: React.FC = () => {
         <div className="flex space-x-2 bg-gray-50 rounded-xl p-1 w-fit border border-gray-100">
           <button
             onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'all'
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'all'
                 ? 'bg-white text-red-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             All
           </button>
           <button
             onClick={() => setActiveTab('hot')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'hot'
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'hot'
                 ? 'bg-white text-red-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             Hot
           </button>
           <button
             onClick={() => setActiveTab('new')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'new'
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'new'
                 ? 'bg-white text-red-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             New
           </button>
@@ -74,10 +71,10 @@ const ChainGrid: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredChains.length === 0 ? (
-          <div className="col-span-full flex justify-center items-center py-12">
-            <div className="text-center">
-              <p className="text-gray-500 text-lg font-medium">No networks found</p>
-              <p className="text-gray-400 mt-1">Try adjusting your search criteria</p>
+          <div className="col-span-full flex justify-center items-center py-18 border border-gray-200 bg-gray-50 rounded-xl">
+            <div className="text-sm text-center w-full py-4">
+              <h4 className="text-xl font-medium text-gray-700">No Chains Found</h4>
+              <p className="text-sm text-gray-500 mt-1">Try adjusting your search criteria.</p>
             </div>
           </div>
         ) : (
