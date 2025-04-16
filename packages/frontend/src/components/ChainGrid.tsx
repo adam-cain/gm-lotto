@@ -73,13 +73,22 @@ const ChainGrid: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredChains.map((chain: Chain) => (
-          <ChainCard
-            key={chain.id}
-            chain={chain}
-            isConnected={isConnected}
-          />
-        ))}
+        {filteredChains.length === 0 ? (
+          <div className="col-span-full flex justify-center items-center py-12">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg font-medium">No networks found</p>
+              <p className="text-gray-400 mt-1">Try adjusting your search criteria</p>
+            </div>
+          </div>
+        ) : (
+          filteredChains.map((chain: Chain) => (
+            <ChainCard
+              key={chain.id}
+              chain={chain}
+              isConnected={isConnected}
+            />
+          ))
+        )}
       </div>
     </div>
   );
