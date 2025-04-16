@@ -11,11 +11,6 @@ export const LOTTERY_MANAGER_ABI = [
                 "name": "_ticketNFT",
                 "type": "address",
                 "internalType": "address"
-            },
-            {
-                "name": "_roundDuration",
-                "type": "uint256",
-                "internalType": "uint256"
             }
         ],
         "stateMutability": "nonpayable"
@@ -55,6 +50,19 @@ export const LOTTERY_MANAGER_ABI = [
     },
     {
         "type": "function",
+        "name": "endCurrentRound",
+        "inputs": [
+            {
+                "name": "prizeAmount",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "function",
         "name": "enterLottery",
         "inputs": [],
         "outputs": [],
@@ -71,7 +79,7 @@ export const LOTTERY_MANAGER_ABI = [
                 "internalType": "uint256"
             },
             {
-                "name": "endTime",
+                "name": "startTime",
                 "type": "uint256",
                 "internalType": "uint256"
             },
@@ -101,12 +109,17 @@ export const LOTTERY_MANAGER_ABI = [
                         "internalType": "uint64"
                     },
                     {
-                        "name": "endTime",
-                        "type": "uint64",
-                        "internalType": "uint64"
+                        "name": "isActive",
+                        "type": "bool",
+                        "internalType": "bool"
                     },
                     {
-                        "name": "isActive",
+                        "name": "prizeSet",
+                        "type": "bool",
+                        "internalType": "bool"
+                    },
+                    {
+                        "name": "prizeClaimed",
                         "type": "bool",
                         "internalType": "bool"
                     },
@@ -121,14 +134,14 @@ export const LOTTERY_MANAGER_ABI = [
                         "internalType": "uint96"
                     },
                     {
-                        "name": "prizeSet",
-                        "type": "bool",
-                        "internalType": "bool"
+                        "name": "winningTicketId",
+                        "type": "uint256",
+                        "internalType": "uint256"
                     },
                     {
-                        "name": "prizeClaimed",
-                        "type": "bool",
-                        "internalType": "bool"
+                        "name": "firstTokenId",
+                        "type": "uint256",
+                        "internalType": "uint256"
                     }
                 ]
             }
@@ -148,11 +161,6 @@ export const LOTTERY_MANAGER_ABI = [
         "outputs": [
             {
                 "name": "startTime",
-                "type": "uint256",
-                "internalType": "uint256"
-            },
-            {
-                "name": "endTime",
                 "type": "uint256",
                 "internalType": "uint256"
             },
@@ -190,6 +198,16 @@ export const LOTTERY_MANAGER_ABI = [
                 "name": "prizeClaimed",
                 "type": "bool",
                 "internalType": "bool"
+            },
+            {
+                "name": "winningTicketId",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "firstTokenId",
+                "type": "uint256",
+                "internalType": "uint256"
             }
         ],
         "stateMutability": "view"
@@ -248,19 +266,6 @@ export const LOTTERY_MANAGER_ABI = [
     },
     {
         "type": "function",
-        "name": "roundDuration",
-        "inputs": [],
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "stateMutability": "view"
-    },
-    {
-        "type": "function",
         "name": "rounds",
         "inputs": [
             {
@@ -276,12 +281,17 @@ export const LOTTERY_MANAGER_ABI = [
                 "internalType": "uint64"
             },
             {
-                "name": "endTime",
-                "type": "uint64",
-                "internalType": "uint64"
+                "name": "isActive",
+                "type": "bool",
+                "internalType": "bool"
             },
             {
-                "name": "isActive",
+                "name": "prizeSet",
+                "type": "bool",
+                "internalType": "bool"
+            },
+            {
+                "name": "prizeClaimed",
                 "type": "bool",
                 "internalType": "bool"
             },
@@ -296,35 +306,12 @@ export const LOTTERY_MANAGER_ABI = [
                 "internalType": "uint96"
             },
             {
-                "name": "prizeSet",
-                "type": "bool",
-                "internalType": "bool"
-            },
-            {
-                "name": "prizeClaimed",
-                "type": "bool",
-                "internalType": "bool"
+                "name": "winningTicketId",
+                "type": "uint256",
+                "internalType": "uint256"
             }
         ],
         "stateMutability": "view"
-    },
-    {
-        "type": "function",
-        "name": "setPrizeAmount",
-        "inputs": [
-            {
-                "name": "roundNumber",
-                "type": "uint256",
-                "internalType": "uint256"
-            },
-            {
-                "name": "amount",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "outputs": [],
-        "stateMutability": "payable"
     },
     {
         "type": "function",
@@ -461,6 +448,12 @@ export const LOTTERY_MANAGER_ABI = [
                 "type": "address",
                 "indexed": false,
                 "internalType": "address"
+            },
+            {
+                "name": "winningTicketId",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
             }
         ],
         "anonymous": false
@@ -483,6 +476,86 @@ export const LOTTERY_MANAGER_ABI = [
             }
         ],
         "anonymous": false
+    },
+    {
+        "type": "error",
+        "name": "ContractIsPaused",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "IncorrectAmount",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "MustBePaused",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "NoActiveRound",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "NoFundsToWithdraw",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "NoTicketsInRound",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "NotWinner",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "OnlyOperator",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "PrizeAlreadyClaimed",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "PrizeAmountTooLow",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "PrizeNotSet",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "PrizeTransferFailed",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "RoundNotActive",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "RoundStillActive",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "WaitPeriodNotOver",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "WithdrawalFailed",
+        "inputs": []
     }
 ] as const;
 
@@ -550,6 +623,38 @@ export const LOTTERY_TOKEN_ABI = [
     },
     {
         "type": "function",
+        "name": "getFirstTokenIdOfRound",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getNextTokenId",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
         "name": "getRoundTicketCount",
         "inputs": [
             {
@@ -582,6 +687,30 @@ export const LOTTERY_TOKEN_ABI = [
                 "name": "",
                 "type": "uint256[]",
                 "internalType": "uint256[]"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getRoundTokenIdRange",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "startId",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "endId",
+                "type": "uint256",
+                "internalType": "uint256"
             }
         ],
         "stateMutability": "view"
@@ -779,6 +908,25 @@ export const LOTTERY_TOKEN_ABI = [
         "inputs": [],
         "outputs": [],
         "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "roundHasTickets",
+        "inputs": [
+            {
+                "name": "roundNumber",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
     },
     {
         "type": "function",

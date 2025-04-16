@@ -67,9 +67,7 @@ interface FullRoundInfo {
  * @param chainId - The chain ID where the contract is deployed
  * @returns Object containing contract interaction methods and state
  */
-export function useLotteryContract(
-  chainId: number,
-) {
+export function useLotteryContract(chainId: number) {
   const { switchChain } = useSwitchChain();
   const { writeContract } = useWriteContract();
   const { address } = useAccount();
@@ -80,7 +78,7 @@ export function useLotteryContract(
   const tokenAddress = chainsById[chainId]?.tokenAddress as `0x${string}`;
 
   // Contract configuration for lottery manager
-  const contractData = {
+  const managerContractData = {
     address: contractAddress,
     abi: LOTTERY_MANAGER_ABI,
     chainId: chainId,
@@ -95,9 +93,9 @@ export function useLotteryContract(
 
   // Get current round information
   const { data: roundInfoData, refetch: refetchRoundInfo } = useReadContract({
-    ...contractData,
+    ...managerContractData,
     functionName: "getCurrentRoundInfo",
-  }) as { data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, refetch: () => void };  
+  }) as { data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, refetch: () => void };
 
   const roundInfo: RoundInfo | null = roundInfoData ? {
     roundNumber: Number(roundInfoData?.[0]),
@@ -118,7 +116,7 @@ export function useLotteryContract(
 
   // Get current round number
   const { data: currentRound } = useReadContract({
-    ...contractData,
+    ...managerContractData,
     functionName: "currentRound",
   });
 
@@ -138,13 +136,13 @@ export function useLotteryContract(
 
   // Get contract pause state
   const { data: isPaused } = useReadContract({
-    ...contractData,
+    ...managerContractData,
     functionName: "isPaused",
   });
 
   // Get user's last participation time
   const { data: lastParticipation } = useReadContract({
-    ...contractData,
+    ...managerContractData,
     functionName: "lastParticipation",
     args: [address || '0x0'],
   });
@@ -162,7 +160,7 @@ export function useLotteryContract(
       });
       
       const result = writeContract({
-        ...contractData,
+        ...managerContractData,
         functionName: "enterLottery",
         gas: BigInt(1000000),
       });
@@ -172,34 +170,6 @@ export function useLotteryContract(
       return true;
     } catch (error) {
       console.error("Error entering lottery:", error);
-      throw error;
-    }
-  };
-
-  /**
-   * Set prize amount for a completed round
-   * @param roundNumber - The round number to set prize for
-   * @param amount - The prize amount in wei
-   * @returns Promise that resolves to true if successful
-   * @throws Error if transaction fails
-   */
-  const setPrizeAmount = async (roundNumber: bigint, amount: bigint) => {
-    try {
-      await switchChain({
-        chainId: chainId,
-      });
-
-      const result = await writeContract({
-        ...contractData,
-        functionName: "setPrizeAmount",
-        args: [roundNumber, amount],
-        value: amount,
-      });
-
-      setTxHash(result as unknown as `0x${string}`);
-      return true;
-    } catch (error) {
-      console.error("Error setting prize amount:", error);
       throw error;
     }
   };
@@ -217,7 +187,7 @@ export function useLotteryContract(
       });
 
       const result = await writeContract({
-        ...contractData,
+        ...managerContractData,
         functionName: "claimPrize",
         args: [roundNumber],
       });
@@ -237,7 +207,7 @@ export function useLotteryContract(
    */
   const useRoundInfo = (roundNumber: bigint): { data: FullRoundInfo | undefined } => {
     const { data } = useReadContract({
-      ...contractData,
+      ...managerContractData,
       functionName: "getRoundInfo",
       args: [roundNumber],
     }) as { data: [bigint, bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean] | undefined };
@@ -298,7 +268,6 @@ export function useLotteryContract(
     isPaused,
     lastParticipation,
     enterLottery,
-    setPrizeAmount,
     claimPrize,
     useRoundInfo,
     useTicketRound,
