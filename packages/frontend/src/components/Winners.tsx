@@ -84,7 +84,7 @@ const Winners: React.FC = () => {
             <h3 className="text-base font-bold text-green-600 mb-2">You&apos;ve won!</h3>
             {isWinner.map((winner, index) => (
               <div key={index}>
-                {index > 0 && <hr className="border-red-100 my-2" />}
+                {index > 0 && <hr className="border-green-100 my-2" />}
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
                     {formatEther(BigInt(winner.prizeAmount))} ETH
