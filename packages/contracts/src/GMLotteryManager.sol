@@ -10,32 +10,50 @@ import "./GMLotteryToken.sol";
  * ticket distribution, winner selection, and prize distribution
  */
 contract GMLotteryManager {
+    // Custom errors for gas optimization
+    error ContractIsPaused();
+    error OnlyOperator();
+    error WaitPeriodNotOver();
+    error RoundNotActive();
+    error RoundStillActive();
+    error NoActiveRound();
+    error IncorrectAmount();
+    error PrizeAmountTooLow();
+    error NotWinner();
+    error PrizeNotSet();
+    error PrizeAlreadyClaimed();
+    error PrizeTransferFailed();
+    error NoFundsToWithdraw();
+    error MustBePaused();
+    error WithdrawalFailed();
+    error NoTicketsInRound();
+
     // Immutable variables
     address public immutable operator;
     GMLotteryToken public immutable ticketNFT;
-    uint256 public immutable roundDuration;
 
     // Packed round data structure
     struct Round {
         uint64 startTime;    // Timestamp when the round started
-        uint64 endTime;      // Timestamp when the round ends
         bool isActive;       // Whether the round is active
-        address winner;      // Address of the winner
-        uint96 prizeAmount;  // Prize amount (supports up to ~79 ETH)
         bool prizeSet;       // Whether prize is set
         bool prizeClaimed;   // Whether prize is claimed
+        address winner;      // Address of the winner
+        uint96 prizeAmount;  // Prize amount (supports up to ~79 ETH)
+        uint256 winningTicketId; // The ID of the winning ticket
     }
 
     // Extended round struct for getCurrentRoundInfo
     struct RoundWithNumber {
         uint256 roundNumber;
         uint64 startTime;
-        uint64 endTime;
         bool isActive;
-        address winner;
-        uint96 prizeAmount;
         bool prizeSet;
         bool prizeClaimed;
+        address winner;
+        uint96 prizeAmount;
+        uint256 winningTicketId;
+        uint256 firstTokenId;
     }
 
     // Current round number and rounds mapping
@@ -48,15 +66,10 @@ contract GMLotteryManager {
     // Contract state
     bool public isPaused;
     
-    // Events:
-    // Should be watched by the frontend to update the UI, for when a user 
-    // enters the lottery, increasing the count of tickets for the round.
-
+    // Events
     event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
-
-    // Possibly delete these
     event RoundStarted(uint256 roundNumber, uint256 startTime);
-    event RoundEnded(uint256 roundNumber, address winner);
+    event RoundEnded(uint256 roundNumber, address winner, uint256 winningTicketId);
     event PrizeSet(uint256 roundNumber, uint256 amount);
     event PrizeClaimed(uint256 roundNumber, address winner, uint256 amount);
     event ContractPaused();
@@ -64,45 +77,42 @@ contract GMLotteryManager {
     event EmergencyWithdrawal(address indexed operator, uint256 amount);
     
     modifier whenNotPaused() {
-        require(!isPaused, "Contract is paused");
+        if (isPaused) revert ContractIsPaused();
+        _;
+    }
+    
+    modifier onlyOperator() {
+        if (msg.sender != operator) revert OnlyOperator();
         _;
     }
     
     /**
      * @dev Constructor to initialize the lottery manager
-     * @param _operator Address of the operator who can set prizes
+     * @param _operator Address of the operator who can manage rounds and set prizes
      * @param _ticketNFT Address of the ticket NFT contract
-     * @param _roundDuration Duration of each round in seconds
      */
-    constructor(address _operator, address _ticketNFT, uint256 _roundDuration) {
-        require(_roundDuration > 0, "Round duration must be greater than 0");
+    constructor(address _operator, address _ticketNFT) {
         operator = _operator;
         ticketNFT = GMLotteryToken(_ticketNFT);
-        roundDuration = _roundDuration;
+        // First round is automatically started
         _startNewRound();
     }
     
     /**
      * @dev Allows a user to enter the lottery
      * @notice Users can only enter once per 24 hours
-     * @notice If the current round has ended, a new round will be started
      */
     function enterLottery() external whenNotPaused {
         uint64 userLastParticipation = lastParticipation[msg.sender];
         
         // Check if user has participated in the last 24 hours
         if (block.timestamp < userLastParticipation + 1 days) {
-            revert("Must wait 24 hours between entries");
+            revert WaitPeriodNotOver();
         }
         
         Round storage round = rounds[currentRound];
         if (!round.isActive) {
-            revert("Round is not yet active");
-        }
-        
-        if (block.timestamp >= round.endTime) {
-            _endRound();
-            _startNewRound();
+            revert RoundNotActive();
         }
         
         // Update user state
@@ -114,11 +124,40 @@ contract GMLotteryManager {
         emit LotteryEntry(msg.sender, currentRound, ticketId);
     }
     
+    /**
+     * @dev Ends the current round, selects a winner if possible, sets the prize, and starts a new round
+     * @notice Only callable by the operator
+     * @param prizeAmount The amount of prize to set for the ending round
+     */
+    function endCurrentRound(uint256 prizeAmount) external payable onlyOperator whenNotPaused {
+        if (!rounds[currentRound].isActive) revert NoActiveRound();
+        if (msg.value != prizeAmount) revert IncorrectAmount();
+        if (prizeAmount == 0) revert PrizeAmountTooLow();
+        
+        uint256 endingRound = currentRound;
+        
+        // End the current round and select winner if possible
+        _endRound();
+        
+        // Set prize for the ending round
+        Round storage round = rounds[endingRound];
+        
+        round.prizeAmount = uint96(prizeAmount);
+        round.prizeSet = true;
+        
+        emit PrizeSet(endingRound, prizeAmount);
+        
+        // Start the next round
+        _startNewRound();
+    }
+    
     function _startNewRound() private {
-        currentRound++;
+        unchecked {
+            currentRound++;
+        }
+        
         Round storage newRound = rounds[currentRound];
         newRound.startTime = uint64(block.timestamp);
-        newRound.endTime = uint64(block.timestamp + roundDuration);
         newRound.isActive = true;
         
         emit RoundStarted(currentRound, newRound.startTime);
@@ -131,46 +170,47 @@ contract GMLotteryManager {
         uint256 roundTicketCount = ticketNFT.getRoundTicketCount(currentRound);
         
         if (roundTicketCount > 0) {
-            // Select winner using block data as source of randomness
-            uint256 winnerIndex = uint256(
-                keccak256(
-                    abi.encodePacked(
-                        block.timestamp,
-                        block.prevrandao,
-                        roundTicketCount
-                    )
-                )
-            ) % roundTicketCount;
+            // Get token ID range for this round
+            (uint256 startId, uint256 endId) = ticketNFT.getRoundTokenIdRange(currentRound);
             
-            uint256 winningTicketId = ticketNFT.getRoundTickets(currentRound)[winnerIndex];
+            if (startId == 0 || endId == 0) {
+                // No tickets in round (should never happen if roundTicketCount > 0)
+                emit RoundEnded(currentRound, address(0), 0);
+                return;
+            }
+            
+            // Generate random index more efficiently
+            uint256 winnerIndex;
+            
+            unchecked {
+                winnerIndex = uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            block.timestamp,
+                            block.prevrandao,
+                            roundTicketCount
+                        )
+                    )
+                ) % roundTicketCount;
+            }
+            
+            // Calculate winning ticket ID directly from the range
+            uint256 winningTicketId = startId + winnerIndex; 
+            
+            // Ensure it's within the valid range
+            if (winningTicketId > endId) {
+                winningTicketId = endId;
+            }
+            
             address winner = ticketNFT.ownerOf(winningTicketId);
             round.winner = winner;
+            round.winningTicketId = winningTicketId;
             
-            emit RoundEnded(currentRound, winner);
+            emit RoundEnded(currentRound, winner, winningTicketId);
+        } else {
+            // No tickets in this round, so no winner
+            emit RoundEnded(currentRound, address(0), 0);
         }
-    }
-
-    /**
-     * @dev Sets the prize amount for a completed round
-     * @param roundNumber The round number to set the prize for
-     * @param amount The amount of prize to set
-     */
-    function setPrizeAmount(uint256 roundNumber, uint256 amount) external payable whenNotPaused {
-        require(msg.sender == operator, "Only operator can set prize");
-        require(msg.value == amount, "Incorrect amount sent");
-        require(amount > 0, "Prize amount must be greater than 0");
-        require(roundNumber > 0 && roundNumber <= currentRound, "Invalid round number");
-        
-        Round storage round = rounds[roundNumber];
-        require(!round.isActive, "Round still active");
-        require(round.winner != address(0), "No winner for this round");
-        require(!round.prizeSet, "Prize already set");
-        require(!round.prizeClaimed, "Prize already claimed");
-        
-        round.prizeAmount = uint96(amount);
-        round.prizeSet = true;
-        
-        emit PrizeSet(roundNumber, amount);
     }
 
     /**
@@ -179,9 +219,9 @@ contract GMLotteryManager {
      */
     function claimPrize(uint256 roundNumber) external whenNotPaused {
         Round storage round = rounds[roundNumber];
-        require(round.winner == msg.sender, "Not the winner");
-        require(round.prizeSet, "Prize not set");
-        require(!round.prizeClaimed, "Prize already claimed");
+        if (round.winner != msg.sender) revert NotWinner();
+        if (!round.prizeSet) revert PrizeNotSet();
+        if (round.prizeClaimed) revert PrizeAlreadyClaimed();
         
         // Store prize amount before updating state
         uint256 prizeAmount = round.prizeAmount;
@@ -191,72 +231,88 @@ contract GMLotteryManager {
         
         // Make external call
         (bool success,) = msg.sender.call{value: prizeAmount}("");
-        require(success, "Prize transfer failed");
+        if (!success) revert PrizeTransferFailed();
         
         emit PrizeClaimed(roundNumber, msg.sender, prizeAmount);
     }
     
-    // View functions
-
-    // Round function
-
-    
-
+    /**
+     * @dev Gets current round information, optimized to cache round ticket count
+     */
     function getCurrentRoundInfo() external view returns (
         uint256 roundNumber,
-        uint256 endTime,
+        uint256 startTime,
         uint256 roundTicketCount,
         uint256 userRoundTicketCount,
         RoundWithNumber[] memory pastRounds
     ) {
         uint256 roundCount = currentRound - 1; // Exclude current round
         RoundWithNumber[] memory previousRounds = new RoundWithNumber[](roundCount);
+        
+        // Cache current round's ticket count to avoid multiple external calls
+        uint256 curRoundTicketCount = ticketNFT.getRoundTicketCount(currentRound);
+        uint256 curUserTicketCount = ticketNFT.getUserTicketCountForRound(msg.sender, currentRound);
+        
         for (uint256 i = 1; i <= roundCount; i++) {
             Round storage roundData = rounds[i];
+            uint256 firstTokenId = ticketNFT.getFirstTokenIdOfRound(i);
+            
             previousRounds[i - 1] = RoundWithNumber({
                 roundNumber: i,
                 startTime: roundData.startTime,
-                endTime: roundData.endTime,
                 isActive: roundData.isActive,
+                prizeSet: roundData.prizeSet,
+                prizeClaimed: roundData.prizeClaimed,
                 winner: roundData.winner,
                 prizeAmount: roundData.prizeAmount,
-                prizeSet: roundData.prizeSet,
-                prizeClaimed: roundData.prizeClaimed
+                winningTicketId: roundData.winningTicketId,
+                firstTokenId: firstTokenId
             });
         }
 
         Round storage round = rounds[currentRound];
         return (
             currentRound,
-            round.endTime,
-            ticketNFT.getRoundTicketCount(currentRound),
-            ticketNFT.getUserTicketCountForRound(msg.sender, currentRound),
+            round.startTime,
+            curRoundTicketCount,
+            curUserTicketCount,
             previousRounds
         );
     }
     
+    /**
+     * @dev Gets information about a specific round, optimized to cache ticket counts
+     */
     function getRoundInfo(uint256 roundNumber) public view returns (
         uint256 startTime,
-        uint256 endTime,
         uint256 roundTicketCount,
         uint256 userRoundTicketCount,
         bool isActive,
         address winner,
         uint256 prizeAmount,
         bool prizeSet,
-        bool prizeClaimed
+        bool prizeClaimed,
+        uint256 winningTicketId,
+        uint256 firstTokenId
     ) {
         Round storage round = rounds[roundNumber];
+        
+        // Cache round's ticket count to avoid multiple external calls
+        uint256 cachedRoundTicketCount = ticketNFT.getRoundTicketCount(roundNumber);
+        uint256 cachedUserTicketCount = ticketNFT.getUserTicketCountForRound(msg.sender, roundNumber);
+        uint256 firstId = ticketNFT.getFirstTokenIdOfRound(roundNumber);
+        
         return (
             round.startTime,
-            round.endTime,
-            ticketNFT.getRoundTicketCount(roundNumber),
-            ticketNFT.getUserTicketCountForRound(msg.sender, roundNumber),
+            cachedRoundTicketCount,
+            cachedUserTicketCount,
             round.isActive,
             round.winner,
             round.prizeAmount,
             round.prizeSet,
-            round.prizeClaimed
+            round.prizeClaimed,
+            round.winningTicketId,
+            firstId
         );
     }
 
@@ -266,8 +322,7 @@ contract GMLotteryManager {
      * @dev Pauses the contract in case of emergency
      * @notice Only callable by the operator
      */
-    function pause() external {
-        require(msg.sender == operator, "Only operator can pause");
+    function pause() external onlyOperator {
         isPaused = true;
         emit ContractPaused();
     }
@@ -276,8 +331,7 @@ contract GMLotteryManager {
      * @dev Unpauses the contract
      * @notice Only callable by the operator
      */
-    function unpause() external {
-        require(msg.sender == operator, "Only operator can unpause");
+    function unpause() external onlyOperator {
         isPaused = false;
         emit ContractUnpaused();
     }
@@ -286,15 +340,14 @@ contract GMLotteryManager {
      * @dev Allows the operator to withdraw all funds in case of emergency
      * @notice Only callable when the contract is paused
      */
-    function emergencyWithdraw() external {
-        require(msg.sender == operator, "Only operator can withdraw");
-        require(isPaused, "Contract must be paused");
+    function emergencyWithdraw() external onlyOperator {
+        if (!isPaused) revert MustBePaused();
         
         uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
+        if (balance == 0) revert NoFundsToWithdraw();
         
         (bool success,) = operator.call{value: balance}("");
-        require(success, "Withdrawal failed");
+        if (!success) revert WithdrawalFailed();
         
         emit EmergencyWithdrawal(operator, balance);
     }
