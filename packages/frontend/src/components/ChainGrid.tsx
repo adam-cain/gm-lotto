@@ -69,7 +69,7 @@ const ChainGrid: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
         {filteredChains.length === 0 ? (
           <div className="col-span-full flex justify-center items-center py-18 border border-gray-200 bg-gray-50 rounded-xl">
             <div className="text-sm text-center w-full py-4">

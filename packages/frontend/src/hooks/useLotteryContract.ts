@@ -92,7 +92,7 @@ export function useLotteryContract(chainId: number) {
   }
 
   // Get current round information
-  const { data: roundInfoData, refetch: refetchRoundInfo } = useReadContract({
+  const { data: roundInfoData } = useReadContract({
     ...managerContractData,
     functionName: "getCurrentRoundInfo",
   }) as { data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, refetch: () => void };
@@ -258,6 +258,7 @@ export function useLotteryContract(chainId: number) {
   // Track transaction status
   const { isLoading: isEntering, isSuccess: hasEntered } = useTransaction({
     hash: txHash,
+    chainId: chainId
   });
 
   return {
@@ -274,7 +275,7 @@ export function useLotteryContract(chainId: number) {
     useUserTicketCountForRound,
     isEntering,
     hasEntered,
-    refetchRoundInfo,
+    // refetchRoundInfo,
   };
 }
 

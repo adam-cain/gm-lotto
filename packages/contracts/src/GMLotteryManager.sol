@@ -102,7 +102,7 @@ contract GMLotteryManager {
      * @dev Allows a user to enter the lottery
      * @notice Users can only enter once per 24 hours
      */
-    function enterLottery() external whenNotPaused {
+    function enterLottery() external whenNotPaused returns (uint64) {
         uint64 userLastParticipation = lastParticipation[msg.sender];
         
         // Check if user has participated in the last 24 hours
@@ -122,6 +122,7 @@ contract GMLotteryManager {
         uint256 ticketId = ticketNFT.mint(msg.sender, currentRound);
                 
         emit LotteryEntry(msg.sender, currentRound, ticketId);
+        return lastParticipation[msg.sender];
     }
     
     /**

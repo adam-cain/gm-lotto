@@ -65,7 +65,13 @@ export const LOTTERY_MANAGER_ABI = [
         "type": "function",
         "name": "enterLottery",
         "inputs": [],
-        "outputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint64",
+                "internalType": "uint64"
+            }
+        ],
         "stateMutability": "nonpayable"
     },
     {
