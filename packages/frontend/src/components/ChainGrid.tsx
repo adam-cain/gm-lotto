@@ -5,7 +5,6 @@ import { useAccount } from 'wagmi';
 
 const ChainGrid: React.FC = () => {
   const { searchTerm, setSearchTerm, filteredChains, activeTab, setActiveTab } = useChainContext();
-  const { isConnected } = useAccount();
 
   return (
     <div>
@@ -82,7 +81,6 @@ const ChainGrid: React.FC = () => {
             <ChainCard
               key={chain.id}
               chain={chain}
-              isConnected={isConnected}
             />
           ))
         )}

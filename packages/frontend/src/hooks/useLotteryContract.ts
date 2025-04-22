@@ -68,7 +68,7 @@ interface FullRoundInfo {
  * @returns Object containing contract interaction methods and state
  */
 export function useLotteryContract(chainId: number) {
-  const { switchChain } = useSwitchChain();
+  // const { switchChain } = useSwitchChain();
   const { writeContract } = useWriteContract();
   const { address } = useAccount();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
@@ -155,9 +155,9 @@ export function useLotteryContract(chainId: number) {
   const enterLottery = async () => {
     try {
       // Switch to the correct chain first
-      switchChain({
-        chainId: chainId,
-      });
+      // switchChain({
+      //   chainId: chainId,
+      // });
       
       const result = writeContract({
         ...managerContractData,
@@ -182,9 +182,9 @@ export function useLotteryContract(chainId: number) {
    */
   const claimPrize = async (roundNumber: bigint) => {
     try {
-      await switchChain({
-        chainId: chainId,
-      });
+      // await switchChain({
+      //   chainId: chainId,
+      // });
 
       const result = await writeContract({
         ...managerContractData,

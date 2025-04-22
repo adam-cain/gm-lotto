@@ -1,32 +1,34 @@
 import Image from 'next/image';
-import { useAccount } from 'wagmi';
-import { useLotteryContract } from '@/hooks/useLotteryContract';
+import { useAccount, useSwitchChain } from 'wagmi';
+import { useLottery } from '@/hooks/useLottery';
 import { Chain, chainsById } from '@/lib/chains';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useConnectModal, useChainModal } from '@rainbow-me/rainbowkit';
 import useCountdown from '@/hooks/useCountdown';
 
 interface ChainCardProps {
   chain: Chain;
-  isConnected: boolean;
 }
 
 const ChainCard: React.FC<ChainCardProps> = ({
   chain,
-  isConnected,
 }) => {
-  const { enterLottery, lastParticipation, refetchRoundInfo } = useLotteryContract(chain.id);
-  const { chainId } = useAccount();
+  const { enterLottery, lastParticipation } = useLottery(chain.id, false);
+  const { chainId, isConnected } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
-  const account = useAccount();
+  // const { openChainModal } = useChainModal();
   const time = useCountdown(Number(lastParticipation) + 60 * 60 * 24, "endTime");
 
   const handleClick = async () => {
     if (isConnected) {
-      enterLottery();
+      if(chainId !== chain.id) {
+        const res = await switchChainAsync({ chainId: chain.id });
+      } else {
+        await enterLottery();
+      }
     } else {
       openConnectModal?.();
     }
-    refetchRoundInfo();
   }
 
   const buttonTextColor = chain.iconBackground
@@ -85,16 +87,16 @@ const ChainCard: React.FC<ChainCardProps> = ({
   };
 
   const isDisabled = () => {
-    return (
-      time !== null && chainId === chain.id
-    )
-  }
+    // User can't participate if they've already participated recently
+    // and they're already on the correct chain
+    return time !== null && chainId === chain.id;
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101">
-      <div className="p-4 border-x border-t border-gray-100 rounded-t-xl ">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101 flex flex-col">
+      <div className="p-4 border-x border-t border-gray-100 rounded-t-xl flex-1">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden  flex-shrink-0 border border-gray-100">
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-100">
             {chain.iconUrl ? (
               <Image
                 width={40}
@@ -120,11 +122,11 @@ const ChainCard: React.FC<ChainCardProps> = ({
               </h3>
               {statusBadge[chain.status as keyof typeof statusBadge]}
             </div>
-            <ConnectionStatus isConnected={account.isConnected} time={time} />
+            <ConnectionStatus isConnected={isConnected} time={time} />
           </div>
         </div>
       </div>
-      <div className="">
+      <div className="mt-auto">
         <button
           onClick={() => handleClick()}
           disabled={isDisabled()}
@@ -147,4 +149,3 @@ const ChainCard: React.FC<ChainCardProps> = ({
 };
 
 export default ChainCard;
-
