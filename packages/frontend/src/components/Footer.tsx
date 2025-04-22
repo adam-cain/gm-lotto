@@ -6,7 +6,7 @@ import InverseRoundedCorner from "./InverseRoundedCorner";
 const Footer: React.FC = () => {
   return (
     <>
-      <footer className=" bg-stone-900">
+      <footer className=" bg-stone-900 mt-8 md:mt-2">
         <div className="relative w-full">
           <InverseRoundedCorner
             className="absolute bottom-0 left-0 rotate-180"

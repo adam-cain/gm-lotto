@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
               <h1 className="text-2xl font-bold font-heading gradient-text">
                 GM Lotto
               </h1>
-              <span className="text-xs font-medium text-gray-500 tracking-wider">
+              <span className="text-xs font-medium tracking-wider text-black">
                 Say GM to the Superchain
               </span>
             </div>

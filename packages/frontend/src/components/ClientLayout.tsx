@@ -11,7 +11,7 @@ export default function ClientLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-white text-gray-900 pt-28">
+        <div className="min-h-screen bg-white text-gray-900 pt-28 lg:pt-32">
             <RainbowKitProvider>
                 <ChainProvider>
                     <Navbar />
