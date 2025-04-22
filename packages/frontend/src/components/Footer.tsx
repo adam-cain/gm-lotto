@@ -9,15 +9,15 @@ const Footer: React.FC = () => {
       <footer className=" bg-stone-900 mt-8 md:mt-2">
         <div className="relative w-full">
           <InverseRoundedCorner
-            className="absolute bottom-0 left-0 rotate-180"
+            className="absolute bottom-0 left-0 rotate-180 bg-stone-900"
             size={60}
             position="bottom-right"
-            color="bg-stone-900" />
+            />
           <InverseRoundedCorner
-            className="absolute bottom-0 right-0 rotate-90 fill-stone-900"
+            className="absolute bottom-0 right-0 rotate-90 bg-stone-900"
             size={60}
             position="bottom-right"
-            color="bg-stone-900" />
+            />
         </div>
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

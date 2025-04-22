@@ -3,18 +3,16 @@ import React from 'react';
 interface InverseRoundedCornerProps {
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   size?: number;
-  color?: string;
   className?: string;
 }
 
 const InverseRoundedCorner: React.FC<InverseRoundedCornerProps> = ({
   position,
   size = 24,
-  color = 'white',
   className = '',
 }) => {
   // Position mapping for the corner
-  const positionStyles = {
+  const positionStyles: Record<InverseRoundedCornerProps['position'], React.CSSProperties> = {
     'top-left': {
       top: 0,
       left: 0,
@@ -39,7 +37,7 @@ const InverseRoundedCorner: React.FC<InverseRoundedCornerProps> = ({
 
   return (
     <div
-      className={`absolute ${color} ${className}`}
+      className={`absolute ${className}`}
       style={{
         width: size,
         height: size,
