@@ -219,10 +219,12 @@ export const useLotteryStore = create<LotteryState>()(
           });
           
           if (userEvents.length > 0) {
-            // User has entered lottery, update ticket counts
+            // User has entered lottery, update state
             get().updateUserTicketCount(chainId, userEvents.length);
             get().updateTicketCount(chainId, userEvents.length);
-            
+            get().setPending(chainId, false);
+            get().setLastParticipation(chainId, Date.now());
+
             // Call optional callback for UI refresh
             if (onTicketUpdate) {
               onTicketUpdate();
@@ -260,7 +262,7 @@ export const useLotteryStore = create<LotteryState>()(
         if (onSuccess) {
           onSuccess();
         }
-        
+
         return true;
       } catch (error) {
         console.error("Error entering lottery:", error);
