@@ -51,13 +51,7 @@ export const LOTTERY_MANAGER_ABI = [
     {
         "type": "function",
         "name": "endCurrentRound",
-        "inputs": [
-            {
-                "name": "prizeAmount",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
+        "inputs": [],
         "outputs": [],
         "stateMutability": "payable"
     },
