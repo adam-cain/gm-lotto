@@ -1,9 +1,12 @@
 import Image from 'next/image';
-import { useAccount, useSwitchChain } from 'wagmi';
-import { useLottery } from '@/hooks/useLottery';
+import { useAccount, useSwitchChain, useWriteContract } from 'wagmi';
 import { Chain, chainsById } from '@/lib/chains';
-import { useConnectModal, useChainModal } from '@rainbow-me/rainbowkit';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import useCountdown from '@/hooks/useCountdown';
+import { useLotteryStore } from '@/store/lotteryStore';
+import { useEffect } from 'react';
+import { useReadContract } from 'wagmi';
+import { LOTTERY_MANAGER_ABI } from '@/config/contracts';
 
 interface ChainCardProps {
   chain: Chain;
@@ -12,19 +15,56 @@ interface ChainCardProps {
 const ChainCard: React.FC<ChainCardProps> = ({
   chain,
 }) => {
-  const { enterLottery, lastParticipation } = useLottery(chain.id, false);
-  const { chainId, isConnected } = useAccount();
+  const { address, chainId, isConnected } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
-  // const { openChainModal } = useChainModal();
+  const { writeContract } = useWriteContract();
+
+  // Get state and actions from the store
+  const { 
+    chainState,
+    enterLottery
+  } = useLotteryStore();
+
+  // Get last participation time for this chain
+  const lastParticipation = chainState[chain.id]?.lastParticipation || 0;
+
+  // Get countdown timer
   const time = useCountdown(Number(lastParticipation) + 60 * 60 * 24, "endTime");
+
+  // Read last participation directly from contract if needed
+  const contractAddress = chain.managerAddress;
+  const { data: contractLastParticipation } = useReadContract({
+    address: contractAddress,
+    abi: LOTTERY_MANAGER_ABI,
+    functionName: "lastParticipation",
+    args: [address || '0x0'],
+    chainId: chain.id,
+    query: {
+      enabled: !!address && !!contractAddress,
+    },
+  });
+
+  // Update last participation in store if contract data is different
+  useEffect(() => {
+    if (contractLastParticipation !== undefined && Number(contractLastParticipation) !== lastParticipation) {
+      const { setLastParticipation } = useLotteryStore.getState();
+      setLastParticipation(chain.id, Number(contractLastParticipation));
+    }
+  }, [contractLastParticipation, chain.id, lastParticipation]);
 
   const handleClick = async () => {
     if (isConnected) {
       if(chainId !== chain.id) {
-        const res = await switchChainAsync({ chainId: chain.id });
+        await switchChainAsync({ chainId: chain.id });
       } else {
-        await enterLottery();
+        // Enter lottery using the store action
+        await enterLottery(
+          chain.id,
+          writeContract,
+          () => console.log("Entered lottery on chain", chain.name),
+          (error) => console.error("Error entering lottery:", error)
+        );
       }
     } else {
       openConnectModal?.();
@@ -92,6 +132,9 @@ const ChainCard: React.FC<ChainCardProps> = ({
     return time !== null && chainId === chain.id;
   };
 
+  // Check if this chain is pending
+  const isPending = chainState[chain.id]?.pending || false;
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-101 flex flex-col">
       <div className="p-4 border-x border-t border-gray-100 rounded-t-xl flex-1">
@@ -129,15 +172,17 @@ const ChainCard: React.FC<ChainCardProps> = ({
       <div className="mt-auto">
         <button
           onClick={() => handleClick()}
-          disabled={isDisabled()}
-          className={`w-full py-2 px-4 text-sm font-medium transition-colors truncate ${isDisabled() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          disabled={isDisabled() || isPending}
+          className={`w-full py-2 px-4 text-sm font-medium transition-colors truncate ${(isDisabled() || isPending) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}
           style={{
             backgroundColor: chain.iconBackground ?? '#000',
             color: buttonTextColor
           }}
         >
-          {isConnected ? (
+          {isPending ? (
+            'Processing...'
+          ) : isConnected ? (
             chainId === chain.id ? `GM on ${chain.name}` : `Switch chain`
           ) : (
             'Connect Wallet'

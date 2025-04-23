@@ -1,4 +1,4 @@
-import { useLottery } from "@/hooks/useLottery";
+import { useLotteryContext } from "@/providers/LotteryProvider";
 import { useAccount } from "wagmi";
 import { formatEther } from "viem";
 import Card from "./Card";
@@ -58,23 +58,22 @@ const mockPastRounds = [
 ];
 
 const Winners: React.FC = () => {
-  const { chainId, address } = useAccount();
-  // Pass false for updateGlobalChain to avoid infinite loops
-  const { roundInfo, claimPrize } = useLottery(chainId || undefined, false);
+  const { address } = useAccount();
+  const { roundInfo, claimPrize, currentChainId } = useLotteryContext();
 
   // Use mock data in development
   const pastRounds = process.env.NODE_ENV === 'development'
     ? mockPastRounds
     : roundInfo?.pastRounds || [];
   
-  if (!chainId || !roundInfo) return null;
+  if (!currentChainId || !roundInfo) return null;
   
   const isWinner = pastRounds.filter((round) => round.winner === address);
 
   return (
     <Card>
       <div className="flex items-center mb-4 gap-2">
-        <h3 className="text-lg font-semibold text-gray-900">Recent Winners</h3>
+        <h3 className="text-lg font-semibold">Recent Winners</h3>
       </div>
 
       <div className="space-y-4">

@@ -1056,6 +1056,19 @@ export const LOTTERY_TOKEN_ABI = [
     },
     {
         "type": "function",
+        "name": "totalSupply",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
         "name": "transferFrom",
         "inputs": [
             {

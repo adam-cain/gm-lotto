@@ -1,53 +1,194 @@
-import React, { createContext, useContext, ReactNode, useEffect } from 'react';
-import { useAccount } from 'wagmi';
-import { useLottery } from '@/hooks/useLottery';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from 'wagmi';
 import { useLotteryStore } from '@/store/lotteryStore';
+import { chainsById } from '@/lib/chains';
+import { LOTTERY_MANAGER_ABI } from '@/config/contracts';
 
-// Create context with default values
-const LotteryContext = createContext<ReturnType<typeof useLottery> | undefined>(undefined);
+// Create context with an empty default value
+const LotteryContext = createContext<ReturnType<typeof useLotteryData>>({
+  currentChainId: null,
+  roundInfo: null,
+  lastParticipation: 0,
+  isPending: false,
+  enterLottery: async () => false,
+  claimPrize: async () => false,
+});
 
-// Custom hook for accessing the lottery context
-export const useLotteryContext = () => {
-  const context = useContext(LotteryContext);
-  if (context === undefined) {
-    throw new Error('useLotteryContext must be used within a LotteryProvider');
-  }
-  return context;
-};
+// Custom hook to access the lottery data
+export const useLotteryContext = () => useContext(LotteryContext);
+
+/**
+ * Hook that pulls data from the store and contracts
+ * Internal hook only used by the provider
+ */
+function useLotteryData() {
+  const { address } = useAccount();
+  const { chainId } = useAccount();
+  const publicClient = usePublicClient();
+  const { writeContract } = useWriteContract();
+  
+  // Get state and actions from the store
+  const { 
+    chainState,
+    currentChainId: storeChainId,
+    setCurrentChainId,
+    setCurrentRoundInfo,
+    setupEventWatcher,
+    enterLottery: storeEnterLottery,
+    claimPrize: storeClaimPrize
+  } = useLotteryStore();
+  
+  // Use current wallet chain if available, otherwise use store's current chain
+  const currentChainId = chainId || storeChainId;
+  
+  // Only continue if we have a chain ID
+  const contractAddress = currentChainId ? chainsById[currentChainId]?.managerAddress : undefined;
+  
+  // Get round info from contract if we have a chain and contract address
+  const { data: roundInfoData, refetch: refetchRoundInfo } = useReadContract({
+    address: contractAddress,
+    abi: LOTTERY_MANAGER_ABI,
+    functionName: "getCurrentRoundInfo",
+    chainId: currentChainId ? currentChainId : undefined,
+    query: {
+      enabled: !!currentChainId && !!contractAddress,
+    },
+  }) as { 
+    data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, 
+    refetch: () => void 
+  };
+
+  console.log('roundInfoData', chainId,currentChainId, roundInfoData);
+  
+  // Get user's last participation time
+  const { data: lastParticipation } = useReadContract({
+    address: contractAddress,
+    abi: LOTTERY_MANAGER_ABI,
+    functionName: "lastParticipation",
+    args: [address || '0x0'],
+    chainId: currentChainId ? currentChainId : undefined,
+    query: {
+      enabled: !!currentChainId && !!contractAddress && !!address,
+    },
+  });
+  
+  // Set up current chain in the store
+  useEffect(() => {
+    if (chainId && chainId !== storeChainId) {
+      setCurrentChainId(chainId);
+    }
+  }, [chainId, storeChainId, setCurrentChainId]);
+  
+  // Update round info in the store when contract data changes
+  useEffect(() => {
+    if (currentChainId && roundInfoData) {
+      const formattedRoundInfo = {
+        roundNumber: Number(roundInfoData[0]),
+        endTime: Number(roundInfoData[1]),
+        ticketCount: Number(roundInfoData[2]),
+        userTicketCount: Number(roundInfoData[3]),
+        pastRounds: roundInfoData[4].map((round) => ({
+          roundNumber: Number(round[0]),
+          startTime: Number(round[1]),
+          endTime: Number(round[2]),
+          isActive: round[3],
+          winner: round[4],
+          prizeAmount: Number(round[5]),
+          prizeSet: round[6],
+          prizeClaimed: round[7],
+        })),
+      };
+      
+      setCurrentRoundInfo(currentChainId, formattedRoundInfo);
+    }
+  }, [currentChainId, roundInfoData, setCurrentRoundInfo]);
+  
+  // Set up event watcher
+  useEffect(() => {
+    if (!currentChainId || !publicClient || !address || !contractAddress) return;
+    
+    const cleanupWatcher = setupEventWatcher(currentChainId, publicClient, address, () => {
+      // Refresh data when events are detected
+      refetchRoundInfo();
+    });
+    
+    return cleanupWatcher;
+  }, [currentChainId, publicClient, address, contractAddress, setupEventWatcher, refetchRoundInfo]);
+  
+  // Get current round info from store
+  const roundInfo = currentChainId 
+    ? chainState[currentChainId]?.roundInfo 
+    : null;
+  
+  // Get isPending status
+  const isPending = currentChainId
+    ? chainState[currentChainId]?.pending || false
+    : false;
+  
+  // Get last participation time
+  const lastParticipationTime = currentChainId
+    ? chainState[currentChainId]?.lastParticipation || Number(lastParticipation || 0)
+    : 0;
+  
+  // Wrapper for enterLottery
+  const enterLotteryFn = async () => {
+    if (!currentChainId) return false;
+    
+    return storeEnterLottery(
+      currentChainId, 
+      writeContract, 
+      () => {
+        // Success callback - refresh data
+        refetchRoundInfo();
+      },
+      (error) => {
+        console.error("Failed to enter lottery:", error);
+      }
+    );
+  };
+  
+  // Wrapper for claimPrize
+  const claimPrizeFn = async (roundNumber: bigint) => {
+    if (!currentChainId) return false;
+    
+    return storeClaimPrize(
+      currentChainId, 
+      roundNumber, 
+      writeContract, 
+      () => {
+        // Success callback - refresh data
+        refetchRoundInfo();
+      },
+      (error) => {
+        console.error("Failed to claim prize:", error);
+      }
+    );
+  };
+  
+  return {
+    currentChainId,
+    roundInfo,
+    lastParticipation: lastParticipationTime,
+    isPending,
+    enterLottery: enterLotteryFn,
+    claimPrize: claimPrizeFn,
+  };
+}
 
 interface LotteryProviderProps {
   children: ReactNode;
-  chainId?: number;
 }
 
-// Provider component
-export const LotteryProvider: React.FC<LotteryProviderProps> = ({ 
-  children, 
-  chainId 
-}) => {
-  const { address, chainId: connectedChainId } = useAccount();
-  const reset = useLotteryStore((state: { reset: () => void }) => state.reset);
-  
-  // Use the provided chainId or fall back to the connected chain
-  const effectiveChainId = chainId || (connectedChainId as number);
-  
-  // Get lottery state using our custom hook - enable updateGlobalChain since this is the main provider
-  const lotteryState = useLottery(effectiveChainId, true);
-  
-  // Reset store when user disconnects wallet
-  useEffect(() => {
-    if (!address) {
-      console.log("Resetting lottery state");
-      reset();
-    }
-  }, [address, reset]);
+/**
+ * Provider component that makes lottery data available
+ * to all child components
+ */
+export function LotteryProvider({ children }: LotteryProviderProps) {
+  const lotteryData = useLotteryData();
   
   return (
-    <LotteryContext.Provider value={lotteryState}>
+    <LotteryContext.Provider value={lotteryData}>
       {children}
     </LotteryContext.Provider>
   );
-};
-
-// Default export for easy importing
-export default LotteryProvider; 
+} 
