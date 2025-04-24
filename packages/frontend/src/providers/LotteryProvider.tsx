@@ -3,7 +3,7 @@ import { useAccount, usePublicClient, useReadContract, useWriteContract } from '
 import { useLotteryStore } from '@/store/lotteryStore';
 import { chainsById } from '@/lib/chains';
 import { LOTTERY_MANAGER_ABI } from '@/config/contracts';
-
+import { Address, RoundInfo } from '@/types';
 // Create context with an empty default value
 const LotteryContext = createContext<ReturnType<typeof useLotteryData>>({
   currentChainId: null,
@@ -22,13 +22,12 @@ export const useLotteryContext = () => useContext(LotteryContext);
  * Internal hook only used by the provider
  */
 function useLotteryData() {
-  const { address } = useAccount();
-  const { chainId } = useAccount();
+  const { address, chainId } = useAccount();
   const publicClient = usePublicClient();
   const { writeContract } = useWriteContract();
-  
+
   // Get state and actions from the store
-  const { 
+  const {
     chainState,
     currentChainId: storeChainId,
     setCurrentChainId,
@@ -37,13 +36,13 @@ function useLotteryData() {
     enterLottery: storeEnterLottery,
     claimPrize: storeClaimPrize
   } = useLotteryStore();
-  
+
   // Use current wallet chain if available, otherwise use store's current chain
   const currentChainId = chainId || storeChainId;
-  
+
   // Only continue if we have a chain ID
   const contractAddress = currentChainId ? chainsById[currentChainId]?.managerAddress : undefined;
-  
+
   // Get round info from contract if we have a chain and contract address
   const { data: roundInfoData, refetch: refetchRoundInfo } = useReadContract({
     address: contractAddress,
@@ -53,13 +52,8 @@ function useLotteryData() {
     query: {
       enabled: !!currentChainId && !!contractAddress,
     },
-  }) as { 
-    data: [bigint, bigint, bigint, bigint, [bigint, bigint, bigint, boolean, `0x${string}`, bigint, boolean, boolean][]] | undefined, 
-    refetch: () => void 
-  };
+  })  
 
-  console.log('roundInfoData', chainId,currentChainId, roundInfoData);
-  
   // Get user's last participation time
   const { data: lastParticipation } = useReadContract({
     address: contractAddress,
@@ -71,72 +65,73 @@ function useLotteryData() {
       enabled: !!currentChainId && !!contractAddress && !!address,
     },
   });
-  
+
   // Set up current chain in the store
   useEffect(() => {
     if (chainId && chainId !== storeChainId) {
       setCurrentChainId(chainId);
     }
   }, [chainId, storeChainId, setCurrentChainId]);
-  
+
   // Update round info in the store when contract data changes
   useEffect(() => {
     if (currentChainId && roundInfoData) {
-      const formattedRoundInfo = {
+      const formattedRoundInfo: RoundInfo = {
         roundNumber: Number(roundInfoData[0]),
-        endTime: Number(roundInfoData[1]),
+        startTime: Number(roundInfoData[1]),
         ticketCount: Number(roundInfoData[2]),
         userTicketCount: Number(roundInfoData[3]),
         pastRounds: roundInfoData[4].map((round) => ({
-          roundNumber: Number(round[0]),
-          startTime: Number(round[1]),
-          endTime: Number(round[2]),
-          isActive: round[3],
-          winner: round[4],
-          prizeAmount: Number(round[5]),
-          prizeSet: round[6],
-          prizeClaimed: round[7],
+          roundNumber: Number(round.roundNumber),
+          startTime: Number(round.startTime),
+          isActive: round.isActive,
+          prizeSet: round.prizeSet,
+          prizeClaimed: round.prizeClaimed,
+          winner: round.winner as Address,
+          prizeAmount: Number(round.prizeAmount),
+          winningTicketId: Number(round.winningTicketId),
+          firstTokenId: Number(round.firstTokenId),
         })),
       };
       
       setCurrentRoundInfo(currentChainId, formattedRoundInfo);
     }
   }, [currentChainId, roundInfoData, setCurrentRoundInfo]);
-  
+
   // Set up event watcher
   useEffect(() => {
     if (!currentChainId || !publicClient || !address || !contractAddress) return;
-    
+
     const cleanupWatcher = setupEventWatcher(currentChainId, publicClient, address, () => {
       // Refresh data when events are detected
       refetchRoundInfo();
     });
-    
+
     return cleanupWatcher;
   }, [currentChainId, publicClient, address, contractAddress, setupEventWatcher, refetchRoundInfo]);
-  
+
   // Get current round info from store
-  const roundInfo = currentChainId 
-    ? chainState[currentChainId]?.roundInfo 
+  const roundInfo = currentChainId
+    ? chainState[currentChainId]?.roundInfo
     : null;
-  
+
   // Get isPending status
   const isPending = currentChainId
     ? chainState[currentChainId]?.pending || false
     : false;
-  
+
   // Get last participation time
   const lastParticipationTime = currentChainId
     ? chainState[currentChainId]?.lastParticipation || Number(lastParticipation || 0)
     : 0;
-  
+
   // Wrapper for enterLottery
   const enterLotteryFn = async () => {
     if (!currentChainId) return false;
-    
+
     return storeEnterLottery(
-      currentChainId, 
-      writeContract, 
+      currentChainId,
+      writeContract,
       () => {
         // Success callback - refresh data
         refetchRoundInfo();
@@ -146,15 +141,15 @@ function useLotteryData() {
       }
     );
   };
-  
+
   // Wrapper for claimPrize
   const claimPrizeFn = async (roundNumber: bigint) => {
     if (!currentChainId) return false;
-    
+
     return storeClaimPrize(
-      currentChainId, 
-      roundNumber, 
-      writeContract, 
+      currentChainId,
+      roundNumber,
+      writeContract,
       () => {
         // Success callback - refresh data
         refetchRoundInfo();
@@ -164,7 +159,7 @@ function useLotteryData() {
       }
     );
   };
-  
+
   return {
     currentChainId,
     roundInfo,
@@ -185,7 +180,7 @@ interface LotteryProviderProps {
  */
 export function LotteryProvider({ children }: LotteryProviderProps) {
   const lotteryData = useLotteryData();
-  
+
   return (
     <LotteryContext.Provider value={lotteryData}>
       {children}

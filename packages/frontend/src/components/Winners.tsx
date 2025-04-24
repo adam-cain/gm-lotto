@@ -3,72 +3,16 @@ import { useAccount } from "wagmi";
 import { formatEther } from "viem";
 import Card from "./Card";
 
-// Mock data for testing
-const mockPastRounds = [
-  {
-    startTime: BigInt(1710000000),
-    endTime: BigInt(1710086400),
-    isActive: false,
-    winner: "0x49eCBEbf2a948BCC39c402688592182206d88da9" as `0x${string}`,
-    prizeAmount: BigInt(1500000000000000000), // 1.5 ETH
-    prizeSet: true,
-    prizeClaimed: true,
-    roundNumber: 1
-  },
-  {
-    startTime: BigInt(1709913600),
-    endTime: BigInt(1710000000),
-    isActive: false,
-    winner: "0x2048E880Cb351E19BB11836b8B71cC60bd043E7B" as `0x${string}`,
-    prizeAmount: BigInt(800000000000000000), // 0.8 ETH
-    prizeSet: true,
-    prizeClaimed: false,
-    roundNumber: 2
-  },
-  {
-    startTime: BigInt(1709913600),
-    endTime: BigInt(1710000000),
-    isActive: false,
-    winner: "0x2048E880Cb351E19BB11836b8B71cC60bd043E7B" as `0x${string}`,
-    prizeAmount: BigInt(800000000000000000), // 0.8 ETH
-    prizeSet: true,
-    prizeClaimed: false,
-    roundNumber: 2
-  },
-  {
-    startTime: BigInt(1709913600),
-    endTime: BigInt(1710000000),
-    isActive: false,
-    winner: "0x2048E880Cb351E19BB11836b8B71cC60bd043E7B" as `0x${string}`,
-    prizeAmount: BigInt(800000000000000000), // 0.8 ETH
-    prizeSet: true,
-    prizeClaimed: false,
-    roundNumber: 2
-  },
-  {
-    startTime: BigInt(1709827200),
-    endTime: BigInt(1709913600),
-    isActive: false,
-    winner: "0x3456789012abcdef3456789012abcdef34567890" as `0x${string}`,
-    prizeAmount: BigInt(2200000000000000000), // 2.2 ETH
-    prizeSet: true,
-    prizeClaimed: true,
-    roundNumber: 3
-  }
-];
-
 const Winners: React.FC = () => {
   const { address } = useAccount();
   const { roundInfo, claimPrize, currentChainId } = useLotteryContext();
-
+  
   // Use mock data in development
-  const pastRounds = process.env.NODE_ENV === 'development'
-    ? mockPastRounds
-    : roundInfo?.pastRounds || [];
+  const pastRounds = roundInfo?.pastRounds || [];
   
   if (!currentChainId || !roundInfo) return null;
   
-  const isWinner = pastRounds.filter((round) => round.winner === address);
+  const isWinner = pastRounds.filter((round) => round.winner === address && round.prizeClaimed === false);
 
   return (
     <Card>
@@ -109,9 +53,6 @@ const Winners: React.FC = () => {
                   {round?.prizeAmount ? `+${Number(round.prizeAmount) / 1e18} ETH` : 'No prize'}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">
-                {round?.endTime ? new Date(Number(round.endTime) * 1000).toLocaleDateString() : 'No end time'}
-              </p>
             </div>
           ))
         ) : (

@@ -22,8 +22,8 @@ export default function ClientLayout({
                         </main>
                     </LotteryProvider>
                 </ChainProvider>
-                <Footer />
             </RainbowKitProvider>
+            <Footer />
         </div>
     );
 } 

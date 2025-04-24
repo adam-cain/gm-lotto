@@ -1,34 +1,10 @@
 import { create } from 'zustand';
 import { chains, chainsById } from '@/lib/chains';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { LOTTERY_MANAGER_ABI, LOTTERY_TOKEN_ABI } from '@/config/contracts';
-import type { PublicClient, Log, TransactionReceipt } from 'viem';
-// import { Chain } from '@/lib/chains';
-
-type Address = `0x${string}`;
-
-// Contract write return type
-type WriteContractReturnType = Address;
-
-/**
- * Interface representing basic round information
- */
-export interface RoundInfo {
-  roundNumber: number;
-  endTime: number;
-  ticketCount: number;
-  userTicketCount: number;
-  pastRounds: readonly {
-    roundNumber: number;
-    startTime: number;
-    endTime: number;
-    isActive: boolean;
-    winner: Address;
-    prizeAmount: number;
-    prizeSet: boolean;
-    prizeClaimed: boolean;
-  }[];
-}
+import { LOTTERY_MANAGER_ABI } from '@/config/contracts';
+import type { PublicClient, Log } from 'viem';
+import { Address, RoundInfo } from '@/types';
+import { useWriteContract } from 'wagmi';
 
 interface ChainLotteryState {
   lastParticipation: number;
@@ -36,6 +12,8 @@ interface ChainLotteryState {
   roundInfo: RoundInfo | null;
   watcherActive: boolean;
 }
+
+type WriteContract = ReturnType<typeof useWriteContract>['writeContract'];
 
 interface LotteryState {
   // Per-chain state
@@ -62,7 +40,7 @@ interface LotteryState {
   // Contract interactions
   enterLottery: (
     chainId: number, 
-    writeContract: (config: any) => any,
+    writeContract: WriteContract,
     onSuccess?: () => void,
     onError?: (error: Error) => void
   ) => Promise<boolean>;
@@ -70,7 +48,7 @@ interface LotteryState {
   claimPrize: (
     chainId: number, 
     roundNumber: bigint, 
-    writeContract: (config: any) => any,
+    writeContract: WriteContract,
     onSuccess?: () => void, 
     onError?: (error: Error) => void
   ) => Promise<boolean>;
@@ -78,6 +56,25 @@ interface LotteryState {
   // Helpers
   getCurrentRoundInfo: (chainId: number) => RoundInfo | null;
   reset: () => void;
+}
+
+// Define the type for write contract config
+interface WriteContractConfig {
+  address: Address;
+  abi: readonly any[];
+  functionName: string;
+  args?: readonly any[];
+  chainId: number;
+  gas?: bigint;
+}
+
+// Type for event logs with args
+interface LotteryEntryLog extends Log {
+  args: {
+    participant: string;
+    roundNumber: bigint;
+    ticketId: bigint;
+  }
 }
 
 // Create initial chain state for all supported chains
@@ -212,10 +209,10 @@ export const useLotteryStore = create<LotteryState>()(
         eventName: 'LotteryEntry',
         onLogs: (logs: Log[]) => {
           // Check if the event is for the current user
-          const userEvents = logs.filter((log: Log) => {
+          const userEvents = logs.filter((log) => {
             // Using type assertion for contract event args
-            const eventData = (log as any).args as { participant: string; roundNumber: bigint; ticketId: bigint };
-            return eventData.participant.toLowerCase() === userAddress.toLowerCase();
+            const typedLog = log as LotteryEntryLog;
+            return typedLog.args.participant.toLowerCase() === userAddress.toLowerCase();
           });
           
           if (userEvents.length > 0) {
@@ -242,15 +239,15 @@ export const useLotteryStore = create<LotteryState>()(
     
     enterLottery: async (chainId, writeContract, onSuccess, onError) => {
       try {
-        const contractAddress = chainsById[chainId]?.managerAddress as `0x${string}`;
+        const contractAddress = chainsById[chainId]?.managerAddress as Address;
         if (!contractAddress) {
           throw new Error(`No contract address found for chain ${chainId}`);
         }
-        
+
         // Set pending state
         get().setPending(chainId, true);
         
-        const txHash = writeContract({
+        await writeContract({
           address: contractAddress,
           abi: LOTTERY_MANAGER_ABI,
           functionName: "enterLottery",
@@ -278,12 +275,12 @@ export const useLotteryStore = create<LotteryState>()(
     
     claimPrize: async (chainId, roundNumber, writeContract, onSuccess, onError) => {
       try {
-        const contractAddress = chainsById[chainId]?.managerAddress as `0x${string}`;
+        const contractAddress = chainsById[chainId]?.managerAddress as Address;
         if (!contractAddress) {
           throw new Error(`No contract address found for chain ${chainId}`);
         }
         
-        const txHash = writeContract({
+        await writeContract({
           address: contractAddress,
           abi: LOTTERY_MANAGER_ABI,
           functionName: "claimPrize",

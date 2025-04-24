@@ -1,7 +1,6 @@
 import ChainCard from './ChainCard';
 import { useChainContext } from '../context/ChainContext';
 import { Chain } from '@/lib/chains';
-import { useAccount } from 'wagmi';
 
 const ChainGrid: React.FC = () => {
   const { searchTerm, setSearchTerm, filteredChains, activeTab, setActiveTab } = useChainContext();

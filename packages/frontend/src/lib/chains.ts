@@ -25,6 +25,7 @@ import {
   bob,
   optimismSepolia,
 } from "wagmi/chains";
+import { Address } from "@/types";
 
 const nativeCurrency = { name: "Ether", symbol: "ETH", decimals: 18 };
 
@@ -32,8 +33,8 @@ export type NetworkStatus = "regular" | "hot" | "new";
 
 export interface Chain extends RainbowKitChain {
   status?: NetworkStatus;
-  managerAddress?: `0x${string}`;
-  tokenAddress?: `0x${string}`;
+  managerAddress?: Address;
+  tokenAddress?: Address;
 }
 
 export const chains: readonly [Chain, ...Chain[]] = [
@@ -41,8 +42,8 @@ export const chains: readonly [Chain, ...Chain[]] = [
     ...optimismSepolia,
     name: "Optimism Sepolia",
     iconUrl: "/chains/optimism.svg",
-    managerAddress: "0x6dF605A2fdEEa6B5C0CFF050b69200f3DB00Cf93" as `0x${string}`,
-    tokenAddress: "0xd93AB7A1Baa196A720A78b6Fe4FF2094f67827db" as `0x${string}`,
+    managerAddress: "0x6dF605A2fdEEa6B5C0CFF050b69200f3DB00Cf93" as Address,
+    tokenAddress: "0xd93AB7A1Baa196A720A78b6Fe4FF2094f67827db" as Address,
     status: "hot",
   },
   ...(process.env.NODE_ENV === 'development' ? [] : []),
@@ -121,15 +122,11 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...hashkey,
-    iconUrl: "/chains/hashkey.png",
-
-    iconBackground: "#0173E5",
+    iconUrl: "/chains/hashkey.png",iconBackground: "#0173E5",
   },
   {
     ...ink,
-    iconUrl: "/chains/ink.png",
-
-    iconBackground: "#7A2DFD",
+    iconUrl: "/chains/ink.png",iconBackground: "#7A2DFD",
   },
   {
     ...lisk,
@@ -149,9 +146,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
   {
     ...mode,
     name: "Mode",
-    iconUrl: "/chains/mode.png",
-
-    iconBackground: "#D8FF00",
+    iconUrl: "/chains/mode.png",iconBackground: "#D8FF00",
   },
   {
     ...optimism,
@@ -161,9 +156,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...orderly,
-    iconUrl: "/chains/orderly.png",
-
-    iconBackground: "#8B21CC",
+    iconUrl: "/chains/orderly.png",iconBackground: "#8B21CC",
   },
   {
     name: "Polynomial",
@@ -221,9 +214,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
       },
     },
     nativeCurrency,
-    iconUrl: "/chains/settlus.png",
-
-    iconBackground: "#025952",
+    iconUrl: "/chains/settlus.png",iconBackground: "#025952",
   },
   {
     ...shape,
@@ -270,15 +261,11 @@ export const chains: readonly [Chain, ...Chain[]] = [
   },
   {
     ...swellchain,
-    iconUrl: "/chains/swell.png",
-
-    iconBackground: "#2E61EC",
+    iconUrl: "/chains/swell.png",iconBackground: "#2E61EC",
   },
   {
     ...unichain,
-    iconUrl: "/chains/unichain.jpg",
-
-    iconBackground: "#F521C1",
+    iconUrl: "/chains/unichain.jpg",iconBackground: "#F521C1",
   },
   {
     ...worldchain,
@@ -319,11 +306,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
         url: "https://explorer.arena-z.gg",
       },
     },
-    nativeCurrency,
-
-    iconUrl: "/chains/arena-z.png",
-
-    iconBackground: "#070730",
+    nativeCurrency,iconUrl: "/chains/arena-z.png",iconBackground: "#070730",
   },
 ] as const satisfies Chain[];
 
