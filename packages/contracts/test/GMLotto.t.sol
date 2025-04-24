@@ -81,7 +81,7 @@ contract GMLotteryTest is Test {
         assertEq(ticketNFT.owner(), address(lotteryManager));
         
         // Verify that next token ID starts from 1
-        assertEq(ticketNFT.getNextTokenId(), 1);
+        assertEq(ticketNFT.totalSupply(), 0); // No tokens yet, so totalSupply is 0
     }
 
     function test_EnterLottery() public {
@@ -96,10 +96,9 @@ contract GMLotteryTest is Test {
         assertEq(roundTicketCount, 1);
         assertEq(userRoundTicketCount, 1);
 
-        // Check user's tickets
-        uint256[] memory userTickets = ticketNFT.getUserTickets(user1);
-        assertEq(userTickets.length, 1);
-        assertEq(ticketNFT.getTicketRound(userTickets[0]), 1);
+        // Check user's ticket count for round
+        uint256 userTicketsForRound = ticketNFT.getUserTicketCountForRound(user1, 1);
+        assertEq(userTicketsForRound, 1);
         
         // Check first token ID of round
         assertEq(ticketNFT.getFirstTokenIdOfRound(1), 1);
@@ -144,7 +143,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends current round and starts a new one
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Check round number
@@ -172,7 +171,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round, sets prize, and starts new round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Get winner info
@@ -206,7 +205,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round 1 and starts round 2
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Fast forward 24 hours
@@ -248,7 +247,7 @@ contract GMLotteryTest is Test {
         
         // Operator ends round 1 and starts round 2
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
         
         // User1 enters lottery for round 2
@@ -272,12 +271,12 @@ contract GMLotteryTest is Test {
         // User1 tries to end round
         vm.startPrank(user1);
         vm.expectRevert(OnlyOperator.selector);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Operator can end round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
     }
 
@@ -300,7 +299,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Get winner
@@ -319,7 +318,7 @@ contract GMLotteryTest is Test {
 
     function test_GetTotalTicketCount() public {
         // Check initial count
-        assertEq(ticketNFT.getTotalTicketCount(), 0);
+        assertEq(ticketNFT.totalSupply(), 0);
 
         // User1 enters lottery
         vm.startPrank(user1);
@@ -327,7 +326,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Check count after first entry
-        assertEq(ticketNFT.getTotalTicketCount(), 1);
+        assertEq(ticketNFT.totalSupply(), 1);
 
         // Fast forward 24 hours
         vm.warp(block.timestamp + 24 hours);
@@ -338,7 +337,7 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
 
         // Check count after second entry
-        assertEq(ticketNFT.getTotalTicketCount(), 2);
+        assertEq(ticketNFT.totalSupply(), 2);
     }
 
     function test_GetPastRounds() public {
@@ -348,7 +347,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round and starts new round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Check past rounds
@@ -367,11 +366,13 @@ contract GMLotteryTest is Test {
         lotteryManager.enterLottery();
         vm.stopPrank();
 
+        // Get the token ID
+        uint256 tokenId = 1; // First token ID
+
         // Try to transfer ticket
-        uint256[] memory tickets = ticketNFT.getUserTickets(user1);
         vm.startPrank(user1);
         vm.expectRevert(); // Should revert on transfer attempt
-        ticketNFT.transferFrom(user1, user2, tickets[0]);
+        ticketNFT.transferFrom(user1, user2, tokenId);
         vm.stopPrank();
     }
 
@@ -381,13 +382,13 @@ contract GMLotteryTest is Test {
         lotteryManager.enterLottery();
         vm.stopPrank();
 
-        // Verify ticket data
-        uint256[] memory tickets = ticketNFT.getUserTickets(user1);
-        assertEq(ticketNFT.getTicketRound(tickets[0]), 1);
-        assertEq(ticketNFT.ownerOf(tickets[0]), user1);
+        // Verify ticket owner and round number via getRoundInfo
+        uint256 tokenId = 1; // First token ID
+        assertEq(ticketNFT.ownerOf(tokenId), user1);
         
-        // Verify ticket ID should be 1 since we start at 1
-        assertEq(tickets[0], 1);
+        // Use getRoundTokenIdRange to verify this ticket belongs to round 1
+        (uint256 startId, uint256 endId) = ticketNFT.getRoundTokenIdRange(1);
+        assertTrue(tokenId >= startId && tokenId <= endId);
     }
 
     function test_RoundTicketCountEdgeCases() public view {
@@ -439,7 +440,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Only operator can withdraw
@@ -466,7 +467,7 @@ contract GMLotteryTest is Test {
     function test_RoundEndEdgeCases() public {
         // End round with no participants
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Verify round 1 has no winner
@@ -484,7 +485,7 @@ contract GMLotteryTest is Test {
 
         // Operator ends round
         vm.startPrank(operator);
-        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}(PRIZE_AMOUNT);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
         vm.stopPrank();
 
         // Non-winner cannot claim prize
@@ -496,7 +497,8 @@ contract GMLotteryTest is Test {
 
     function test_RoundHasTickets() public {
         // No tickets initially
-        assertFalse(ticketNFT.roundHasTickets(1));
+        uint256 ticketCount = ticketNFT.getRoundTicketCount(1);
+        assertEq(ticketCount, 0);
         
         // User1 enters lottery
         vm.startPrank(user1);
@@ -504,7 +506,8 @@ contract GMLotteryTest is Test {
         vm.stopPrank();
         
         // Should have tickets now
-        assertTrue(ticketNFT.roundHasTickets(1));
+        ticketCount = ticketNFT.getRoundTicketCount(1);
+        assertEq(ticketCount, 1);
         
         // First token ID should be 1
         assertEq(ticketNFT.getFirstTokenIdOfRound(1), 1);
