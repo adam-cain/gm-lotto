@@ -24,7 +24,7 @@ contract GMLotteryToken is ERC721, Ownable {
     // Mapping to store ticket data
     mapping(uint256 => Ticket) private _tickets;
 
-    // Mapping to store user's ticket IDs
+    // Mapping to store user's ticket IDs - Potentially useful for frontends, keep for now
     mapping(address => uint256[]) private _userTickets;
 
     // Mapping to store tickets by round
@@ -110,26 +110,6 @@ contract GMLotteryToken is ERC721, Ownable {
     }
 
     /**
-     * @dev Returns all tickets owned by a user
-     * @param user Address of the user
-     * @return Array of ticket IDs owned by the user
-     */
-    function getUserTickets(
-        address user
-    ) external view returns (uint256[] memory) {
-        return _userTickets[user];
-    }
-
-    /**
-     * @dev Returns the number of tickets owned by a user
-     * @param user Address of the user
-     * @return Number of tickets owned by the user
-     */
-    function getUserTicketCount(address user) external view returns (uint256) {
-        return _userTickets[user].length;
-    }
-
-    /**
      * @dev Returns the number of tickets for a specific round
      * @param roundNumber The round number
      * @return Number of tickets for the specified round
@@ -141,36 +121,6 @@ contract GMLotteryToken is ERC721, Ownable {
     }
 
     /**
-     * @dev Checks if a round has any tickets
-     * @param roundNumber The round number to check
-     * @return True if the round has tickets, false otherwise
-     */
-    function roundHasTickets(uint256 roundNumber) external view returns (bool) {
-        return _roundTickets[roundNumber].length > 0;
-    }
-
-    /**
-     * @dev Returns the round number for a specific ticket
-     * @param tokenId ID of the ticket
-     * @return Round number the ticket belongs to
-     */
-    function getTicketRound(uint256 tokenId) external view returns (uint256) {
-        return _tickets[tokenId].roundNumber;
-    }
-
-    /**
-     * @dev Returns all tickets for a specific round
-     * @param roundNumber The round number
-     * @return Array of ticket IDs for the specified round, used by the manager
-     * contract to determine the winner
-     */
-    function getRoundTickets(
-        uint256 roundNumber
-    ) external view returns (uint256[] memory) {
-        return _roundTickets[roundNumber];
-    }
-
-    /**
      * @dev Returns the first token ID of a specific round
      * @param roundNumber The round number
      * @return First token ID of the round, or 0 if the round has no tickets
@@ -179,14 +129,6 @@ contract GMLotteryToken is ERC721, Ownable {
         uint256 roundNumber
     ) external view returns (uint256) {
         return _roundFirstTokenId[roundNumber];
-    }
-
-    /**
-     * @dev Returns the first token ID of the next round (current _nextTokenId)
-     * @return Next token ID to be minted
-     */
-    function getNextTokenId() external view returns (uint256) {
-        return _nextTokenId;
     }
 
     /**
@@ -232,16 +174,6 @@ contract GMLotteryToken is ERC721, Ownable {
         // O(1)
         return _userTicketsByRound[roundNumber][user];
     }
-
-    /**
-     * @dev Returns the total number of tickets minted
-     * @return Total number of tickets minted
-     */
-    function getTotalTicketCount() external view returns (uint256) {
-        return _nextTokenId - 1; // Subtract 1 since we start from 1 and nextTokenId is the next to be minted
-    }
-
-// TODO: Change the image url domain to the actual production domain
 
     /**
      * @dev Returns the token URI for a specific token ID
