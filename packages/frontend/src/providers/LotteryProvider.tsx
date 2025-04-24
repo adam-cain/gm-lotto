@@ -34,7 +34,8 @@ function useLotteryData() {
     setCurrentRoundInfo,
     setupEventWatcher,
     enterLottery: storeEnterLottery,
-    claimPrize: storeClaimPrize
+    claimPrize: storeClaimPrize,
+    reset
   } = useLotteryStore();
 
   // Use current wallet chain if available, otherwise use store's current chain
@@ -74,6 +75,10 @@ function useLotteryData() {
       setCurrentChainId(chainId);
     }
   }, [chainId, storeChainId, setCurrentChainId]);
+
+  useEffect(() => {
+    reset()
+  }, [address, reset]);
 
   // Update round info in the store when contract data changes
   useEffect(() => {
