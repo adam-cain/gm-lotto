@@ -43,10 +43,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
     query: {
       enabled: !!address && !!contractAddress,
     },
-  });
-
-  console.log("contractLastParticipation", contractLastParticipation, lastParticipation);
-  
+  });  
 
   // Update last participation in store if contract data is different
   useEffect(() => {

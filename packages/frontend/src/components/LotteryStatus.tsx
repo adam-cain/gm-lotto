@@ -14,7 +14,6 @@ export default function LotteryStatus() {
 		lastParticipation,
 	} = useLotteryContext();
 
-	console.log("LotteryStatus", roundInfo);
 	const chainName = currentChainId ? chainsById[currentChainId].name : "";
 	const title = chainName + (roundInfo?.roundNumber ? " Round #" + roundInfo?.roundNumber : "");
 
