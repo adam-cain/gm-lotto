@@ -52,6 +52,7 @@ function useLotteryData() {
     query: {
       enabled: !!currentChainId && !!contractAddress,
     },
+    account: address,
   })  
 
   // Get user's last participation time
@@ -64,6 +65,7 @@ function useLotteryData() {
     query: {
       enabled: !!currentChainId && !!contractAddress && !!address,
     },
+    account: address,
   });
 
   // Set up current chain in the store
