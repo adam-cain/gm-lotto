@@ -58,16 +58,6 @@ interface LotteryState {
   reset: () => void;
 }
 
-// Define the type for write contract config
-interface WriteContractConfig {
-  address: Address;
-  abi: readonly any[];
-  functionName: string;
-  args?: readonly any[];
-  chainId: number;
-  gas?: bigint;
-}
-
 // Type for event logs with args
 interface LotteryEntryLog extends Log {
   args: {
