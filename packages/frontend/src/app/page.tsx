@@ -4,9 +4,12 @@ import WalletStatus from "@/components/WalletStatus";
 import LotteryStatus from "@/components/LotteryStatus";
 import Winners from "@/components/Winners";
 import Image from "next/image";
+// import Admin from "@/components/Admin";
 
 export default function Home() {
   return (
+    <>
+    {/* <Admin /> */}
     <div className="flex flex-col md:flex-row gap-8 lg:gap-16 min-h-screen">
       <div className="flex-1">
         <div className="mb-8 lg:mb-16 relative overflow-hidden rounded-4xl aspect-video">
@@ -41,5 +44,6 @@ export default function Home() {
         <Winners />
       </div>
     </div>
+    </>
   );
 }
