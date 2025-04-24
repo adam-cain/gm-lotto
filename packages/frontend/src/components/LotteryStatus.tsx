@@ -14,7 +14,7 @@ export default function LotteryStatus() {
 		lastParticipation,
 	} = useLotteryContext();
 
-	const chainName = currentChainId ? chainsById[currentChainId].name : "";
+	const chainName = currentChainId && chainsById[currentChainId] ? chainsById[currentChainId].name : "";
 	const title = chainName + (roundInfo?.roundNumber ? " Round #" + roundInfo?.roundNumber : "");
 
 	// Early return if not connected or no round info
