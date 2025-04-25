@@ -4,6 +4,7 @@ import { Chain, chainsById } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import useCountdown from '@/hooks/useCountdown';
 import { useLotteryStore } from '@/store/lotteryStore';
+import { NetworkStatus } from '@/types';
 
 interface ChainCardProps {
   chain: Chain;
@@ -18,7 +19,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
   const { writeContract } = useWriteContract();
 
   // Get state and actions from the store
-  const { 
+  const {
     chainState,
     enterLottery
   } = useLotteryStore();
@@ -31,7 +32,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
 
   const handleClick = async () => {
     if (isConnected) {
-      if(chainId !== chain.id) {
+      if (chainId !== chain.id) {
         await switchChainAsync({ chainId: chain.id });
       } else {
         // Enter lottery using the store action
@@ -65,23 +66,23 @@ const ChainCard: React.FC<ChainCardProps> = ({
     })()
     : 'white'; // Default to white text if no color specified
 
-  const statusBadge = {
+  const statusBadge: Record<NetworkStatus, React.ReactNode> = {
+    recent: (
+      <span className="bg-blue-100 text-blue-600 border border-blue-600 text-xs font-medium px-2 py-0.5 rounded-full">
+        Recent
+      </span>
+    ),
     hot: (
-      <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
+      <span className="bg-orange-100 text-orange-600 border border-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">
         Hot
       </span>
     ),
-    new: (
-      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-0.5 rounded-full">
-        New
-      </span>
-    ),
-    regular: null,
+    all: null,
   };
 
-  const StatusIndicator = ({ color, text }: { color: string; text: string }) => (
+  const StatusIndicator = ({ color, text }: { color: "red" | "green"; text: string }) => (
     <div className="flex items-center gap-2">
-      <div className={`w-2 h-2 rounded-full ${color === 'green' ? 'bg-green-500' : 'bg-red-500'}`} />
+      <div className={`w-2 h-2 rounded-full ${color === 'red' ? 'bg-red-500' : 'bg-green-500'}`} />
       <p className="text-xs text-gray-500">{text}</p>
     </div>
   );
@@ -91,7 +92,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
       return <StatusIndicator color="red" text="Not connected" />;
     }
 
-    if(chainsById[chain.id].tokenAddress === undefined || chainsById[chain.id].managerAddress === undefined) {
+    if (chainsById[chain.id].tokenAddress === undefined || chainsById[chain.id].managerAddress === undefined) {
       return <StatusIndicator color="red" text="Missing Contract" />;
     }
 
@@ -135,7 +136,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-1">
               <h3 className="font-medium text-gray-900 truncate">
                 {chain.name}
               </h3>
@@ -159,7 +160,7 @@ const ChainCard: React.FC<ChainCardProps> = ({
           {isPending ? (
             <div className="flex items-center justify-center">
               <div className={`w-4 h-4 animate-spin fill-white fill-${buttonTextColor}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" ><path d="M222.7 32.1c5 16.9-4.6 34.8-21.5 39.8C121.8 95.6 64 169.1 64 256c0 106 86 192 192 192s192-86 192-192c0-86.9-57.8-160.4-137.1-184.1c-16.9-5-26.6-22.9-21.5-39.8s22.9-26.6 39.8-21.5C434.9 42.1 512 140 512 256c0 141.4-114.6 256-256 256S0 397.4 0 256C0 140 77.1 42.1 182.9 10.6c16.9-5 34.8 4.6 39.8 21.5z"/></svg> 
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" ><path d="M222.7 32.1c5 16.9-4.6 34.8-21.5 39.8C121.8 95.6 64 169.1 64 256c0 106 86 192 192 192s192-86 192-192c0-86.9-57.8-160.4-137.1-184.1c-16.9-5-26.6-22.9-21.5-39.8s22.9-26.6 39.8-21.5C434.9 42.1 512 140 512 256c0 141.4-114.6 256-256 256S0 397.4 0 256C0 140 77.1 42.1 182.9 10.6c16.9-5 34.8 4.6 39.8 21.5z" /></svg>
               </div>
             </div>
           ) : isConnected ? (

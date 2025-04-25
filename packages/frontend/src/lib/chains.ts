@@ -67,11 +67,13 @@ export const chains: readonly [Chain, ...Chain[]] = [
     ...bob,
     iconUrl: "/chains/bob.webp",
     iconBackground: "#F25D00",
+    status: "hot",
   },
   {
     ...base,
     iconUrl: "/chains/base.svg",
     iconBackground: "#2050F5",
+    status: "hot",
   },
   {
     name: "Binary",
@@ -151,6 +153,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
     name: "Optimism",
     iconUrl: "/chains/op.png",
     iconBackground: "#FE0521",
+    status: "hot",
   },
   {
     ...orderly,
@@ -264,6 +267,7 @@ export const chains: readonly [Chain, ...Chain[]] = [
   {
     ...unichain,
     iconUrl: "/chains/unichain.jpg",iconBackground: "#F521C1",
+    status: "hot",
   },
   {
     ...worldchain,

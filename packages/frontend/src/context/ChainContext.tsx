@@ -42,6 +42,7 @@ export const ChainProvider: React.FC<ChainProviderProps> = ({ children }) => {
       return {
         ...chain,
         lastParticipation,
+        status: lastParticipation > 0 ? 'recent' : chain.status
       }
     });
   }, [chainState]);

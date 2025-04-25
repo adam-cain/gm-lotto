@@ -65,7 +65,7 @@ const Navbar: React.FC = () => {
                 Connect Wallet
               </button>  */}
               <div className="md:hidden">
-             <ConnectButton accountStatus="address" showBalance={false} label="Connect" />
+             <ConnectButton accountStatus="address" showBalance={false} label="Connect Wallet" />
              </div>
           </div>
         </div>
