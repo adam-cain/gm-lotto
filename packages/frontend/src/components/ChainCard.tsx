@@ -4,9 +4,6 @@ import { Chain, chainsById } from '@/lib/chains';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import useCountdown from '@/hooks/useCountdown';
 import { useLotteryStore } from '@/store/lotteryStore';
-import { useEffect } from 'react';
-import { useReadContract } from 'wagmi';
-import { LOTTERY_MANAGER_ABI } from '@/config/contracts';
 
 interface ChainCardProps {
   chain: Chain;
