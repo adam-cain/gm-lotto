@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Chain, chains } from '../lib/chains';
 import { useLotteryStore } from '@/store/lotteryStore';
 import { NetworkStatus } from '@/types';
