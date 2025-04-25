@@ -15,7 +15,6 @@ contract GMLotteryManager {
     error OnlyOperator();
     error WaitPeriodNotOver();
     error RoundNotActive();
-    error RoundStillActive();
     error NoActiveRound();
     error IncorrectAmount();
     error PrizeAmountTooLow();
@@ -26,7 +25,6 @@ contract GMLotteryManager {
     error NoFundsToWithdraw();
     error MustBePaused();
     error WithdrawalFailed();
-    error NoTicketsInRound();
 
     // Immutable variables
     address public immutable operator;
@@ -38,13 +36,13 @@ contract GMLotteryManager {
         bool isActive; // Whether the round is active
         bool prizeSet; // Whether prize is set
         bool prizeClaimed; // Whether prize is claimed
-        address winner; // Address of the winner
         uint96 prizeAmount; // Prize amount (supports up to ~79 ETH)
         uint256 winningTicketId; // The ID of the winning ticket
+        mapping(address => uint64) lastParticipation; // Last participation timestamp for each user in the round
     }
 
     // Extended round struct for getCurrentRoundInfo
-    struct RoundWithNumber {
+    struct PrevRound {
         uint256 roundNumber;
         uint64 startTime;
         bool isActive;
@@ -52,16 +50,11 @@ contract GMLotteryManager {
         bool prizeClaimed;
         address winner;
         uint96 prizeAmount;
-        uint256 winningTicketId;
-        uint256 firstTokenId;
     }
 
     // Current round number and rounds mapping
     uint256 public currentRound;
     mapping(uint256 => Round) public rounds;
-
-    // User's last participation timestamp
-    mapping(address => uint64) public lastParticipation;
 
     // Contract state
     bool public isPaused;
@@ -111,26 +104,26 @@ contract GMLotteryManager {
      * @notice Users can only enter once per 24 hours
      */
     function enterLottery() external whenNotPaused returns (uint64) {
-        uint64 userLastParticipation = lastParticipation[msg.sender];
+        Round storage round = rounds[currentRound];
+        if (!round.isActive) {
+            revert RoundNotActive();
+        }
+
+        uint64 userLastParticipation = round.lastParticipation[msg.sender];
 
         // Check if user has participated in the last 24 hours
         if (block.timestamp < userLastParticipation + 1 days) {
             revert WaitPeriodNotOver();
         }
 
-        Round storage round = rounds[currentRound];
-        if (!round.isActive) {
-            revert RoundNotActive();
-        }
-
         // Update user state
-        lastParticipation[msg.sender] = uint64(block.timestamp);
+        round.lastParticipation[msg.sender] = uint64(block.timestamp);
 
         // Mint NFT ticket
         uint256 ticketId = ticketNFT.mint(msg.sender, currentRound);
 
         emit LotteryEntry(msg.sender, currentRound, ticketId);
-        return lastParticipation[msg.sender];
+        return round.lastParticipation[msg.sender];
     }
 
     /**
@@ -212,11 +205,9 @@ contract GMLotteryManager {
                 winningTicketId = endId;
             }
 
-            address winner = ticketNFT.ownerOf(winningTicketId);
-            round.winner = winner;
             round.winningTicketId = winningTicketId;
 
-            emit RoundEnded(currentRound, winner, winningTicketId);
+            emit RoundEnded(currentRound, ticketNFT.ownerOf(winningTicketId), winningTicketId);
         } else {
             // No tickets in this round, so no winner
             emit RoundEnded(currentRound, address(0), 0);
@@ -229,7 +220,8 @@ contract GMLotteryManager {
      */
     function claimPrize(uint256 roundNumber) external whenNotPaused {
         Round storage round = rounds[roundNumber];
-        if (round.winner != msg.sender) revert NotWinner();
+        if (round.winningTicketId == 0) revert NotWinner();
+        if (ticketNFT.ownerOf(round.winningTicketId) != msg.sender) revert NotWinner();
         if (!round.prizeSet) revert PrizeNotSet();
         if (round.prizeClaimed) revert PrizeAlreadyClaimed();
 
@@ -257,11 +249,11 @@ contract GMLotteryManager {
             uint256 startTime,
             uint256 roundTicketCount,
             uint256 userRoundTicketCount,
-            RoundWithNumber[] memory pastRounds
+            PrevRound[] memory pastRounds
         )
     {
         uint256 roundCount = currentRound - 1; // Exclude current round
-        RoundWithNumber[] memory previousRounds = new RoundWithNumber[](
+        PrevRound[] memory previousRounds = new PrevRound[](
             roundCount
         );
 
@@ -276,18 +268,15 @@ contract GMLotteryManager {
 
         for (uint256 i = 1; i <= roundCount; i++) {
             Round storage roundData = rounds[i];
-            uint256 firstTokenId = ticketNFT.getFirstTokenIdOfRound(i);
 
-            previousRounds[i - 1] = RoundWithNumber({
+            previousRounds[i - 1] = PrevRound({
                 roundNumber: i,
                 startTime: roundData.startTime,
                 isActive: roundData.isActive,
                 prizeSet: roundData.prizeSet,
                 prizeClaimed: roundData.prizeClaimed,
-                winner: roundData.winner,
-                prizeAmount: roundData.prizeAmount,
-                winningTicketId: roundData.winningTicketId,
-                firstTokenId: firstTokenId
+                winner: roundData.winningTicketId > 0 ? ticketNFT.ownerOf(roundData.winningTicketId) : address(0),
+                prizeAmount: roundData.prizeAmount
             });
         }
 
@@ -333,19 +322,28 @@ contract GMLotteryManager {
             roundNumber
         );
         uint256 firstId = ticketNFT.getFirstTokenIdOfRound(roundNumber);
-
+        winner = round.winningTicketId > 0 ? ticketNFT.ownerOf(round.winningTicketId) : address(0);
         return (
             round.startTime,
             cachedRoundTicketCount,
             cachedUserTicketCount,
             round.isActive,
-            round.winner,
+            winner,
             round.prizeAmount,
             round.prizeSet,
             round.prizeClaimed,
             round.winningTicketId,
             firstId
         );
+    }
+
+    /**
+     * @dev Gets a user's last participation timestamp for a the current round
+     * @param user The address of the user
+     * @return timestamp The last participation timestamp for the user in the current round
+     */
+    function getLastParticipation(address user) external view returns (uint64) {
+        return rounds[currentRound].lastParticipation[user];
     }
 
     // EMERGENCY FUNCTIONS

@@ -14,7 +14,6 @@ contract GMLotteryTest is Test {
     address public user3 = address(0x3);
     uint256 public constant INITIAL_TIMESTAMP = 1000000;
     uint256 public constant PRIZE_AMOUNT = 1 ether;
-
     // Events
     event LotteryEntry(address indexed participant, uint256 roundNumber, uint256 ticketId);
     event RoundStarted(uint256 roundNumber, uint256 startTime);
@@ -30,7 +29,6 @@ contract GMLotteryTest is Test {
     error OnlyOperator();
     error WaitPeriodNotOver();
     error RoundNotActive();
-    error RoundStillActive();
     error NoActiveRound();
     error IncorrectAmount();
     error PrizeAmountTooLow();
@@ -41,7 +39,6 @@ contract GMLotteryTest is Test {
     error NoFundsToWithdraw();
     error MustBePaused();
     error WithdrawalFailed();
-    error NoTicketsInRound();
 
     function setUp() public {
         // Set initial timestamp
@@ -68,7 +65,7 @@ contract GMLotteryTest is Test {
             uint256 startTime,
             uint256 roundTicketCount,
             uint256 userRoundTicketCount,
-            GMLotteryManager.RoundWithNumber[] memory pastRounds
+            GMLotteryManager.PrevRound[] memory pastRounds
         ) = lotteryManager.getCurrentRoundInfo();
         
         assertEq(roundNumber, 1);
@@ -342,7 +339,7 @@ contract GMLotteryTest is Test {
 
     function test_GetPastRounds() public {
         // Initially no past rounds
-        (,,,,GMLotteryManager.RoundWithNumber[] memory pastRounds) = lotteryManager.getCurrentRoundInfo();
+        (,,,,GMLotteryManager.PrevRound[] memory pastRounds) = lotteryManager.getCurrentRoundInfo();
         assertEq(pastRounds.length, 0);
 
         // Operator ends round and starts new round
@@ -356,8 +353,6 @@ contract GMLotteryTest is Test {
         assertEq(pastRounds[0].roundNumber, 1);
         assertEq(pastRounds[0].startTime, INITIAL_TIMESTAMP);
         assertFalse(pastRounds[0].isActive);
-        // first token ID should be 0 since no tickets were minted
-        assertEq(pastRounds[0].firstTokenId, 0);
     }
 
     function test_CannotTransferTicket() public {
@@ -511,5 +506,32 @@ contract GMLotteryTest is Test {
         
         // First token ID should be 1
         assertEq(ticketNFT.getFirstTokenIdOfRound(1), 1);
+    }
+
+    function test_GetLastParticipation() public {
+        // Initially there should be no participation record
+        assertEq(lotteryManager.getLastParticipation(user1), 0);
+        
+        // User1 enters lottery
+        vm.startPrank(user1);
+        uint64 timestamp = lotteryManager.enterLottery();
+        vm.stopPrank();
+        
+        // Check that last participation timestamp is recorded for current round
+        assertEq(lotteryManager.getLastParticipation(user1), timestamp);
+        
+        // Start new round
+        vm.startPrank(operator);
+        lotteryManager.endCurrentRound{value: PRIZE_AMOUNT}();
+        vm.stopPrank();
+        
+        // User1 enters new round
+        vm.warp(block.timestamp + 24 hours);
+        vm.startPrank(user1);
+        uint64 timestamp2 = lotteryManager.enterLottery();
+        vm.stopPrank();
+        
+        // Check participation in current round (now round 2)
+        assertEq(lotteryManager.getLastParticipation(user1), timestamp2);
     }
 } 
