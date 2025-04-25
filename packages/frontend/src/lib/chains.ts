@@ -39,15 +39,6 @@ export interface Chain extends RainbowKitChain {
 
 export const chains: readonly [Chain, ...Chain[]] = [
   {
-    ...optimismSepolia,
-    name: "Optimism Sepolia",
-    iconUrl: "/chains/optimism.svg",
-    managerAddress: "0x5Cf6F21600AA0e5ED62ad7ad611c36155ac4fB99" as Address,
-    tokenAddress: "0xB0b7D5Ee5eD459F81D24c5ba6E177986AB3fE68C" as Address,
-    status: "hot",
-  },
-  ...(process.env.NODE_ENV === 'development' ? [] : []),
-  {
     name: "Automata",
     id: 65536,
     rpcUrls: {
@@ -65,6 +56,15 @@ export const chains: readonly [Chain, ...Chain[]] = [
     iconUrl: "/chains/automata.png",
     iconBackground: "#F3E4CD",
   },
+  {
+    ...optimismSepolia,
+    name: "Optimism Sepolia",
+    iconUrl: "/chains/optimism.svg",
+    managerAddress: "0x5Cf6F21600AA0e5ED62ad7ad611c36155ac4fB99" as Address,
+    tokenAddress: "0xB0b7D5Ee5eD459F81D24c5ba6E177986AB3fE68C" as Address,
+    status: "hot",
+  },
+  ...(process.env.NODE_ENV === 'development' ? [] : []),
   {
     ...bob,
     iconUrl: "/chains/bob.webp",

@@ -28,13 +28,13 @@ const ChainGrid: React.FC = () => {
             Hot
           </button>
           <button
-            onClick={() => setActiveTab('new')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'new'
+            onClick={() => setActiveTab('recent')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'recent'
                 ? 'bg-white text-red-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            New
+            Recent
           </button>
         </div>
 
