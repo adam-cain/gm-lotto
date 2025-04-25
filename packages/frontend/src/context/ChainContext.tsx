@@ -1,16 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { Chain, chains } from '../lib/chains';
 import { useLotteryStore } from '@/store/lotteryStore';
-
-type TabType = 'all' | 'hot' | 'recent';
+import { NetworkStatus } from '@/types';
 
 interface ChainContextType {
   chains: readonly Chain[];
   filteredChains: Chain[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
+  activeTab: NetworkStatus;
+  setActiveTab: (tab: NetworkStatus) => void;
 }
 
 const ChainContext = createContext<ChainContextType | undefined>(undefined);
@@ -29,7 +28,7 @@ interface ChainProviderProps {
 
 export const ChainProvider: React.FC<ChainProviderProps> = ({ children }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [activeTab, setActiveTab] = useState<NetworkStatus>('all');
 
   // Get state and actions from the store
   const { 

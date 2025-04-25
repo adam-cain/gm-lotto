@@ -15,3 +15,5 @@ export interface RoundInfo {
       prizeAmount: number;
     }[];
   }
+
+export type NetworkStatus = "all" | "hot" | "recent";
