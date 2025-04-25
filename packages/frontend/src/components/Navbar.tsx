@@ -63,8 +63,10 @@ const Navbar: React.FC = () => {
                 className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm"
               >
                 Connect Wallet
-              </button> */}
-            {/* <ConnectButton accountStatus="address" showBalance={false} label="Connect" /> */}
+              </button>  */}
+              <div className="md:hidden">
+             <ConnectButton accountStatus="address" showBalance={false} label="Connect" />
+             </div>
           </div>
         </div>
       </div>
