@@ -32,6 +32,7 @@ function useLotteryData() {
     currentChainId: storeChainId,
     setCurrentChainId,
     setCurrentRoundInfo,
+    setLastParticipation,
     setupEventWatcher,
     enterLottery: storeEnterLottery,
     claimPrize: storeClaimPrize,
@@ -54,20 +55,7 @@ function useLotteryData() {
       enabled: !!currentChainId && !!contractAddress,
     },
     account: address,
-  })  
-
-  // Get user's last participation time
-  const { data: lastParticipation } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_MANAGER_ABI,
-    functionName: "lastParticipation",
-    args: [address || '0x0'],
-    chainId: currentChainId ? currentChainId : undefined,
-    query: {
-      enabled: !!currentChainId && !!contractAddress && !!address,
-    },
-    account: address,
-  });
+  })    
 
   // Set up current chain in the store
   useEffect(() => {
@@ -96,8 +84,6 @@ function useLotteryData() {
           prizeClaimed: round.prizeClaimed,
           winner: round.winner as Address,
           prizeAmount: Number(round.prizeAmount),
-          winningTicketId: Number(round.winningTicketId),
-          firstTokenId: Number(round.firstTokenId),
         })),
       };
       
@@ -127,10 +113,29 @@ function useLotteryData() {
     ? chainState[currentChainId]?.pending || false
     : false;
 
+    // Get user's last participation time
+  const { data: lastParticipation } = useReadContract({
+    address: contractAddress,
+    abi: LOTTERY_MANAGER_ABI,
+    functionName: "getLastParticipation",
+    args: [address || '0x0'],
+    chainId: currentChainId ? currentChainId : undefined,
+    query: {
+      enabled: !!currentChainId && !!contractAddress && !!address,
+    },
+    account: address,
+  });
+
   // Get last participation time
   const lastParticipationTime = currentChainId
     ? chainState[currentChainId]?.lastParticipation || Number(lastParticipation || 0)
     : 0;
+
+  useEffect(() => {
+    if (currentChainId && lastParticipation) {
+      setLastParticipation(currentChainId, Number(lastParticipation));
+    }
+  }, [currentChainId, lastParticipation, setLastParticipation]);
 
   // Wrapper for enterLottery
   const enterLotteryFn = async () => {

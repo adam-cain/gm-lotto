@@ -15,7 +15,7 @@ interface ChainCardProps {
 const ChainCard: React.FC<ChainCardProps> = ({
   chain,
 }) => {
-  const { address, chainId, isConnected } = useAccount();
+  const { chainId, isConnected } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { writeContract } = useWriteContract();
@@ -31,27 +31,6 @@ const ChainCard: React.FC<ChainCardProps> = ({
 
   // Get countdown timer
   const time = useCountdown(Number(lastParticipation) + 60 * 60 * 24, "endTime");
-
-  // Read last participation directly from contract if needed
-  const contractAddress = chain.managerAddress;
-  const { data: contractLastParticipation } = useReadContract({
-    address: contractAddress,
-    abi: LOTTERY_MANAGER_ABI,
-    functionName: "lastParticipation",
-    args: [address || '0x0'],
-    chainId: chain.id,
-    query: {
-      enabled: !!address && !!contractAddress,
-    },
-  });  
-
-  // Update last participation in store if contract data is different
-  useEffect(() => {
-    if (contractLastParticipation !== undefined && Number(contractLastParticipation) !== lastParticipation) {
-      const { setLastParticipation } = useLotteryStore.getState();
-      setLastParticipation(chain.id, Number(contractLastParticipation));
-    }
-  }, [contractLastParticipation, chain.id, lastParticipation]);
 
   const handleClick = async () => {
     if (isConnected) {

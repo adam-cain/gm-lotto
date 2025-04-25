@@ -6,7 +6,6 @@ export interface RoundInfo {
     ticketCount: number;
     userTicketCount: number;
     pastRounds: {
-      firstTokenId: number;
       roundNumber: number;
       startTime: number;
       isActive: boolean;
@@ -14,6 +13,5 @@ export interface RoundInfo {
       prizeClaimed: boolean;
       winner: Address;
       prizeAmount: number;
-      winningTicketId: number;
     }[];
   }

@@ -210,7 +210,7 @@ export const useLotteryStore = create<LotteryState>()(
             // User has entered lottery, update state
             get().updateUserTicketCount(chainId);
             get().updateTicketCount(chainId);
-            get().setLastParticipation(chainId, Date.now());
+            get().setLastParticipation(chainId, Math.floor(Date.now() / 1000));
 
             // Call optional callback for UI refresh
             if (onTicketUpdate) {
@@ -280,6 +280,7 @@ export const useLotteryStore = create<LotteryState>()(
           functionName: "claimPrize",
           args: [roundNumber],
           chainId,
+          gas: BigInt(1000000),
         });
         
         if (onSuccess) {
