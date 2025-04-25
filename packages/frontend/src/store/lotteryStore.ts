@@ -205,18 +205,22 @@ export const useLotteryStore = create<LotteryState>()(
             return typedLog.args.participant.toLowerCase() === userAddress.toLowerCase();
           });
           
+          // User entered the lottery
           if (userEvents.length > 0) {
             // User has entered lottery, update state
-            get().updateUserTicketCount(chainId, userEvents.length);
-            get().updateTicketCount(chainId, userEvents.length);
-            get().setPending(chainId, false);
+            get().updateUserTicketCount(chainId);
+            get().updateTicketCount(chainId);
             get().setLastParticipation(chainId, Date.now());
 
             // Call optional callback for UI refresh
             if (onTicketUpdate) {
               onTicketUpdate();
             }
+          }else{
+            // Other user entered the lottery
+            get().updateTicketCount(chainId);
           }
+          get().setPending(chainId, false);
         }
       });
       
