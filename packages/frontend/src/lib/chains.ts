@@ -29,8 +29,7 @@ import { Address } from "@/types";
 
 const nativeCurrency = { name: "Ether", symbol: "ETH", decimals: 18 };
 
-export type NetworkStatus = "regular" | "hot" | "new";
-
+import { NetworkStatus } from "@/types";
 export interface Chain extends RainbowKitChain {
   status?: NetworkStatus;
   managerAddress?: Address;
