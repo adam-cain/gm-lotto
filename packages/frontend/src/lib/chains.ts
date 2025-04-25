@@ -25,11 +25,10 @@ import {
   bob,
   optimismSepolia,
 } from "wagmi/chains";
-import { Address } from "@/types";
+import { Address, NetworkStatus } from "@/types";
 
 const nativeCurrency = { name: "Ether", symbol: "ETH", decimals: 18 };
 
-import { NetworkStatus } from "@/types";
 export interface Chain extends RainbowKitChain {
   status?: NetworkStatus;
   managerAddress?: Address;

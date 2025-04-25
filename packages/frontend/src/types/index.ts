@@ -1,5 +1,7 @@
 export type Address = `0x${string}`;
 
+export type NetworkStatus = "all" | "hot" | "recent";
+
 export interface RoundInfo {
     roundNumber: number;
     startTime: number;
